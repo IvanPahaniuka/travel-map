@@ -115,20 +115,24 @@ async function loadPlaces() {
 }
 
 function checkNearbyToCenter() {
+
 	const minVolumeDistance = 300_000;
-	const maxVolumeDistance = 30_000;
-	const mapDiagonalToHeightRatio = 0.025;
+	const maxVolumeDistance = 50_000;
+
+	const minVolumeHeight = 1_000_000;
+	const maxVolumeHeight = 100_000;
+	const mapDiagonalToHeightRatio = 0.2;
 
 	const mapBounds = map.getBounds();
 	const mapCenter = mapBounds.getCenter();
 	const mapDiagonal = mapBounds.getNorthEast().distanceTo(mapBounds.getSouthWest());
 	const mapHeight = mapDiagonal * mapDiagonalToHeightRatio;
+	const mapHeightVolumeFactor = Math.max(0, Math.min(1, (mapHeight - maxVolumeHeight) / (minVolumeHeight - maxVolumeHeight)));
 
-	const getDistanceToView = (lat, lng) => {
+	const getDistance = (lat, lng) => {
 		const point = L.latLng(lat, lng);
 		const distanceToCenter = point.distanceTo(mapCenter);
-		const distanceToView = Math.sqrt(mapHeight * mapHeight + distanceToCenter * distanceToCenter);
-		return distanceToView;
+		return distanceToCenter;
 	}
 
 	const getVolumeFromDistance = (distance) => {
@@ -136,14 +140,14 @@ function checkNearbyToCenter() {
 		if (distance <= maxVolumeDistance) return 1;
 
 		const normalized = (distance - maxVolumeDistance) / (minVolumeDistance - maxVolumeDistance);
-		return Math.max(0, Math.min(1, 1 - normalized));
+		return Math.max(0, Math.min(1, 1 - normalized)) * mapHeightVolumeFactor;
 	}
 
 	let nearestPlace = null;
 	let nearestDistance = Infinity;
 
 	places.forEach((place) => {
-		const distance = getDistanceToView(place.latitude, place.longitude);
+		const distance = getDistance(place.latitude, place.longitude);
 
 		if (distance < nearestDistance) {
 			nearestDistance = distance;
