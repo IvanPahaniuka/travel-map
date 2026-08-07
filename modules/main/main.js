@@ -116,8 +116,8 @@ async function loadPlaces() {
 
 
 function checkNearbyToCenter() {
-	const minDistanceToPlace = 5000;
-	const mapDiagonalToHeightRatio = 0.28867513459481288225457439025098; // 1 / (2 * tg(60°))
+	const minDistanceToPlace = 100_000;
+	const mapDiagonalToHeightRatio = 0.2; // ~ (1 / (2 * tg(70°)))
 
 	const mapBounds = map.getBounds();
 	const mapCenter = mapBounds.getCenter();
