@@ -117,7 +117,7 @@ async function loadPlaces() {
 function checkNearbyToCenter() {
 	const minVolumeDistance = 300_000;
 	const maxVolumeDistance = 30_000;
-	const mapDiagonalToHeightRatio = 0.2; // ~ (1 / (2 * tg(70°)))
+	const mapDiagonalToHeightRatio = 0.025;
 
 	const mapBounds = map.getBounds();
 	const mapCenter = mapBounds.getCenter();
@@ -204,9 +204,10 @@ async function init() {
 	});
 
 	await Spotify.init();
+
 	checkNearbyToCenter();
-	map.on('moveend', checkNearbyToCenter);
-	map.on('zoomend', checkNearbyToCenter);
+	map.on('move', checkNearbyToCenter);
+	map.on('zoom', checkNearbyToCenter);
 }
 
 init();
