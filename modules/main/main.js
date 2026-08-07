@@ -12,6 +12,7 @@ let lastNearbyPlaceId = null;
 // TODO fix video playback
 // TODO implement video preview (maybe extend gallery items with objects support e.g. { "url": "....", "preview": "....." })
 // TODO add hero-card
+// TODO add ./ support to data.json and gallery items urls. It should be relative to the data.json file location, not the index.html file location.
 
 const map = L.map('map', {
 	zoomControl: false,

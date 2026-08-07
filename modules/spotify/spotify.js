@@ -173,40 +173,6 @@ function openLoginDialog() {
   dialog.open();
 }
 
-function loadSpotifySdk() {
-  return new Promise((resolve, reject) => {
-    if (window.Spotify && window.Spotify.Player) {
-      resolve(window.Spotify);
-      return;
-    }
-
-    const existingScript = document.querySelector('script[src="https://sdk.scdn.co/spotify-player.js"]');
-    if (existingScript) {
-      existingScript.addEventListener('load', () => {
-        if (window.Spotify) {
-          resolve(window.Spotify);
-        } else {
-          reject(new Error('Spotify SDK loaded but window.Spotify is missing.'));
-        }
-      });
-      return;
-    }
-
-    const script = document.createElement('script');
-    script.src = 'https://sdk.scdn.co/spotify-player.js';
-    script.async = true;
-    script.addEventListener('load', () => {
-      if (window.Spotify) {
-        resolve(window.Spotify);
-      } else {
-        reject(new Error('Spotify SDK loaded but window.Spotify is missing.'));
-      }
-    });
-    script.addEventListener('error', () => reject(new Error('Unable to load Spotify Web Playback SDK.')));
-    document.head.appendChild(script);
-  });
-}
-
 async function ensureSpotifyPlayer() {
   if (playerReady && player && deviceId) {
     return;
@@ -215,8 +181,6 @@ async function ensureSpotifyPlayer() {
   if (!accessToken) {
     throw new Error('Spotify access token is missing.');
   }
-
-  await loadSpotifySdk();
 
   return new Promise((resolve, reject) => {
     if (player) {
