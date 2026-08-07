@@ -137,7 +137,7 @@ function checkNearbyToCenter() {
 
 	const getVolumeFromDistance = (distance) => {
 		if (distance >= minVolumeDistance) return 0;
-		if (distance <= maxVolumeDistance) return 1;
+		if (distance <= maxVolumeDistance) return mapHeightVolumeFactor;
 
 		const normalized = (distance - maxVolumeDistance) / (minVolumeDistance - maxVolumeDistance);
 		return Math.max(0, Math.min(1, 1 - normalized)) * mapHeightVolumeFactor;
