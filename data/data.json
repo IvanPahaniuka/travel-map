@@ -1,0 +1,37 @@
+{
+	"places": [
+		{
+			"id": "athens-september-2023",
+			"date": "2023-09-01",
+			"title": {
+				"default": "Athens, Greece",
+				"ru": "Афины, Греция"
+			},
+			"latitude": 37.983321151363675,
+			"longitude": 23.72735246279523,
+			"gallery": [
+				"file:///C%3A/Projects/TravelMap/data/athens-2023/photo_2026-07-29_21-30-55.jpg",
+				"file:///C%3A/Projects/TravelMap/data/athens-2023/photo_2026-07-30_23-18-26.jpg",
+				"file:///C%3A/Projects/TravelMap/data/athens-2023/photo_2026-07-30_23-19-58.jpg",
+				"file:///C%3A/Projects/TravelMap/data/athens-2023/photo_2026-08-03_18-57-00.jpg"
+			]
+		},
+		{
+			"id": "batumi-july-2026",
+			"date": "2026-07-01",
+			"title": {
+				"default": "Batumi, Georgia",
+				"ru": "Батуми, Грузия"
+			},
+			"latitude": 41.63961096087828,
+			"longitude": 41.61283673602739,
+			"gallery": [
+				"file:///C%3A/Projects/TravelMap/data/batumi-2026/photo_2026-07-28_22-57-52.jpg",
+				"file:///C%3A/Projects/TravelMap/data/batumi-2026/photo_2026-07-28_22-58-51.jpg",
+				"file:///C%3A/Projects/TravelMap/data/batumi-2026/photo_2026-07-28_22-59-35.jpg",
+				"file:///C%3A/Projects/TravelMap/data/batumi-2026/photo_2026-07-28_23-04-39.jpg",
+				"file:///C%3A/Projects/TravelMap/data/batumi-2026/photo_2026-07-29_23-27-02.jpg"
+			]
+		}
+	]
+}

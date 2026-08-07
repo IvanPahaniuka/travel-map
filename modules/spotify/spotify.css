@@ -1,0 +1,7 @@
+.dialog-button.spotify-dialog-button {
+  background-color: #1db954;
+}
+
+.dialog-button.spotify-dialog-button:hover {
+	background: #14883c;
+}
