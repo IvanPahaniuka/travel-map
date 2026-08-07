@@ -119,7 +119,7 @@ function checkNearbyToCenter() {
 	const minVolumeDistance = 300_000;
 	const maxVolumeDistance = 50_000;
 
-	const minVolumeHeight = 1_000_000;
+	const minVolumeHeight = 900_000;
 	const maxVolumeHeight = 100_000;
 	const mapDiagonalToHeightRatio = 0.2;
 
@@ -127,7 +127,7 @@ function checkNearbyToCenter() {
 	const mapCenter = mapBounds.getCenter();
 	const mapDiagonal = mapBounds.getNorthEast().distanceTo(mapBounds.getSouthWest());
 	const mapHeight = mapDiagonal * mapDiagonalToHeightRatio;
-	const mapHeightVolumeFactor = Math.max(0, Math.min(1, (mapHeight - maxVolumeHeight) / (minVolumeHeight - maxVolumeHeight)));
+	const mapHeightVolumeFactor = 1 - Math.max(0, Math.min(1, (mapHeight - maxVolumeHeight) / (minVolumeHeight - maxVolumeHeight)));
 
 	const getDistance = (lat, lng) => {
 		const point = L.latLng(lat, lng);
