@@ -5,23 +5,12 @@ const TRACK_BY_PLACE = {
   'batumi-july-2026': 'spotify:track:7GhIk7Il098yCjg4BQjzvb',
 };
 
-let accessToken = '';
 let player = null;
 let deviceId = null;
-let playerReady = false;
-
-function syncAccessToken() {
-  accessToken = SpotifyAuth.getAccessToken();
-  return accessToken;
-}
 
 async function connectSpotifyPlayer() {
-  if (playerReady && player && deviceId) {
+  if (player) {
     return;
-  }
-
-  if (!accessToken) {
-    throw new Error('Spotify access token is missing.');
   }
 
   if (!window.Spotify?.Player) {
@@ -30,6 +19,11 @@ async function connectSpotifyPlayer() {
 
   if (!window.Spotify?.Player) {
     throw new Error('Spotify Web Playback SDK is not available.');
+  }
+
+  let accessToken = await SpotifyAuth.getAccessToken(true);
+  if (!accessToken) {
+    throw new Error('Spotify access token is missing.');
   }
 
   return new Promise((resolve, reject) => {
@@ -44,13 +38,16 @@ async function connectSpotifyPlayer() {
     });
 
     player.addListener('initialization_error', ({ message }) => console.error('Spotify initialization error:', message));
-    player.addListener('authentication_error', ({ message }) => console.error('Spotify authentication error:', message));
     player.addListener('account_error', ({ message }) => console.error('Spotify account error:', message));
     player.addListener('playback_error', ({ message }) => console.error('Spotify playback error:', message));
 
+    player.addListener('authentication_error', ({ message }) => {
+      console.error('Spotify authentication error:', message);
+      SpotifyAuth.getAccessToken(true).then((token) => accessToken = token);
+    });
+
     player.addListener('ready', ({ device_id }) => {
       deviceId = device_id;
-      playerReady = true;
       resolve(player);
     });
 
@@ -63,30 +60,12 @@ async function connectSpotifyPlayer() {
 }
 
 async function setVolume(volume) {
-  accessToken = syncAccessToken();
-
-  if (!accessToken) {
-    console.warn('Spotify access token is missing, cannot set volume.');
-    SpotifyAuth.openLoginDialog();
-    return;
-  }
-
   try {
     await connectSpotifyPlayer();
 
     if (player && typeof player.setVolume === 'function') {
       await player.setVolume(volume);
       return;
-    }
-
-    if (deviceId) {
-      const volumePercent = Math.round(volume * 100);
-      await fetch(`https://api.spotify.com/v1/me/player/volume?device_id=${encodeURIComponent(deviceId)}&volume_percent=${volumePercent}`, {
-        method: 'PUT',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
     }
   } catch (error) {
     console.error('Spotify volume request failed:', error);
@@ -100,10 +79,9 @@ async function playTrackForPlace(placeId, volume = 1) {
     return;
   }
 
-  accessToken = syncAccessToken();
+  const accessToken = await SpotifyAuth.getAccessToken(true);
   if (!accessToken) {
     console.warn('Spotify access token is missing, cannot play track.');
-    SpotifyAuth.openLoginDialog();
     return;
   }
 
@@ -131,24 +109,21 @@ async function playTrackForPlace(placeId, volume = 1) {
   }
 }
 
-async function initSpotify() {
+async function init() {
   const authenticated = await SpotifyAuth.init();
   if (!authenticated) {
     return;
   }
 
-  accessToken = syncAccessToken();
-
   try {
     await connectSpotifyPlayer();
   } catch (error) {
     console.error('Unable to initialize Spotify playback:', error);
-    SpotifyAuth.openLoginDialog();
   }
 }
 
 const Spotify = {
-  init: initSpotify,
+  init,
   playTrackForPlace,
   setVolume,
 };
