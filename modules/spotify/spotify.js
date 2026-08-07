@@ -220,7 +220,7 @@ async function ensureSpotifyPlayer() {
   });
 }
 
-async function setPlaybackVolume(volume) {
+async function setVolume(volume) {
   if (!accessToken) {
     console.warn('Spotify access token is missing, cannot set volume.');
     return;
@@ -263,7 +263,7 @@ async function playTrackForPlace(placeId, volume = 1) {
 
   try {
     await ensureSpotifyPlayer();
-    await setPlaybackVolume(volume);
+    await setVolume(volume);
 
     if (!deviceId) {
       console.warn('Spotify device ID not available yet.');
@@ -283,10 +283,6 @@ async function playTrackForPlace(placeId, volume = 1) {
   } catch (error) {
     console.error('Spotify playback request failed:', error);
   }
-}
-
-async function setVolume(volume) {
-  await setPlaybackVolume(volume);
 }
 
 function parseAuthorizationResponse() {
@@ -340,6 +336,7 @@ async function initSpotify() {
 const Spotify = {
   init: initSpotify,
   playTrackForPlace,
+  setVolume,
 };
 
 export default Spotify;
