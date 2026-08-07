@@ -11,7 +11,7 @@ let lastNearbyPlaceId = null;
 // TODO implement parameters support in data.json (e.g. access_token)
 // TODO fix video playback
 // TODO implement video preview (maybe extend gallery items with objects support e.g. { "url": "....", "preview": "....." })
-// TODO add hero-card hiding
+// TODO add hero-card
 
 const map = L.map('map', {
 	zoomControl: false,
