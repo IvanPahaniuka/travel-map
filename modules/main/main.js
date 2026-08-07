@@ -119,7 +119,7 @@ function checkNearbyToCenter() {
 	const minVolumeDistance = 300_000;
 	const maxVolumeDistance = 50_000;
 
-	const minVolumeHeight = 900_000;
+	const minVolumeHeight = 500_000;
 	const maxVolumeHeight = 100_000;
 	const mapDiagonalToHeightRatio = 0.2;
 
