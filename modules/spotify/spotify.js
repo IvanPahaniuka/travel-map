@@ -7,9 +7,9 @@ const REDIRECT_URI = window.location.origin && window.location.origin !== 'null'
   : `${window.location.href}`;
 const SPOTIFY_SCOPES = [
   'streaming',
-  //'user-read-email',
-  //'user-read-private',
-  //'user-modify-playback-state',
+  'user-read-email',
+  'user-read-private',
+  'user-modify-playback-state',
 ];
 const AUTHORIZATION_ENDPOINT = 'https://accounts.spotify.com/authorize';
 const TOKEN_ENDPOINT = 'https://accounts.spotify.com/api/token';
