@@ -128,8 +128,10 @@ function getDistanceMeters(lat1, lon1, lat2, lon2) {
 	return R * c;
 }
 
-function handlePositionUpdate(position) {
-	const { latitude, longitude } = position.coords;
+function checkNearbyToCenter() {
+	const center = map.getCenter();
+	const latitude = center.lat;
+	const longitude = center.lng;
 	let nearestPlace = null;
 	let nearestDistance = Infinity;
 
@@ -149,23 +151,6 @@ function handlePositionUpdate(position) {
 	} else {
 		lastNearbyPlaceId = null;
 	}
-}
-
-function handlePositionError(error) {
-	console.warn('Geolocation failed:', error.message);
-}
-
-function startGeolocationWatch() {
-	if (!navigator.geolocation) {
-		console.warn('Geolocation is not available in this browser.');
-		return;
-	}
-
-	navigator.geolocation.watchPosition(handlePositionUpdate, handlePositionError, {
-		enableHighAccuracy: true,
-		maximumAge: 10000,
-		timeout: 15000,
-	});
 }
 
 async function init() {
@@ -207,7 +192,9 @@ async function init() {
 	});
 
 	await Spotify.init();
-	startGeolocationWatch();
+	checkNearbyToCenter();
+	map.on('moveend', checkNearbyToCenter);
+	map.on('zoomend', checkNearbyToCenter);
 }
 
 init();
