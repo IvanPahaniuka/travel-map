@@ -3,8 +3,9 @@ import Translations from '../translations/translations.js';
 import Spotify from '../spotify/spotify.js';
 
 let places = [];
-let lastNearbyPlaceId = null;
+let lastPlaceId = null;
 
+// TODO add multiple music formats support (spotify or files) and array of songs
 // TODO implement loading data and files from files cloud (e.g. Google Drive) + with access token as parameter
 // TODO implement dialog window that asks to provide url to data.json if it wasn't provided as parameter to index.html (e.g. ?data_url=https://example.com/data.json) 
 // TODO implement parameters support in data.json (e.g. access_token)
@@ -114,58 +115,51 @@ async function loadPlaces() {
 	return data?.places || [];
 }
 
-function checkNearbyToCenter() {
+function updateLoudestPlace() {
 
 	const minVolumeDistance = 300_000;
 	const maxVolumeDistance = 50_000;
 
-	const minVolumeHeight = 500_000;
-	const maxVolumeHeight = 100_000;
-	const mapDiagonalToHeightRatio = 0.2;
+	const minVolumeBoundsDistance = 2_000_000;
+	const maxVolumeBoundsDistance = 1_000_000;
 
 	const mapBounds = map.getBounds();
 	const mapCenter = mapBounds.getCenter();
 	const mapDiagonal = mapBounds.getNorthEast().distanceTo(mapBounds.getSouthWest());
-	const mapHeight = mapDiagonal * mapDiagonalToHeightRatio;
-	const mapHeightVolumeFactor = 1 - Math.max(0, Math.min(1, (mapHeight - maxVolumeHeight) / (minVolumeHeight - maxVolumeHeight)));
+	const mapDiagonalVolumeFactor = 1 - Math.max(0, Math.min(1, (mapDiagonal - maxVolumeBoundsDistance) / (minVolumeBoundsDistance - maxVolumeBoundsDistance)));
 
-	const getDistance = (lat, lng) => {
-		const point = L.latLng(lat, lng);
-		const distanceToCenter = point.distanceTo(mapCenter);
-		return distanceToCenter;
-	}
-
-	const getVolumeFromDistance = (distance) => {
+	const getMapDistanceVolumeFactor = (distance) => {
 		if (distance >= minVolumeDistance) return 0;
-		if (distance <= maxVolumeDistance) return mapHeightVolumeFactor;
+		if (distance <= maxVolumeDistance) return 1;
 
-		const normalized = (distance - maxVolumeDistance) / (minVolumeDistance - maxVolumeDistance);
-		return Math.max(0, Math.min(1, 1 - normalized)) * mapHeightVolumeFactor;
+		return 1 - Math.max(0, Math.min(1, (distance - maxVolumeDistance) / (minVolumeDistance - maxVolumeDistance)));
 	}
-
-	let nearestPlace = null;
-	let nearestDistance = Infinity;
+	
+	let loudestPlace = null;
+	let loudestVolume = 0;
 
 	places.forEach((place) => {
-		const distance = getDistance(place.latitude, place.longitude);
-
-		if (distance < nearestDistance) {
-			nearestDistance = distance;
-			nearestPlace = place;
+		const mapDistance = L.latLng(place.latitude, place.longitude).distanceTo(mapCenter);
+		const mapDistanceVolumeFactor = getMapDistanceVolumeFactor(mapDistance);
+		const volume = mapDistanceVolumeFactor * mapDiagonalVolumeFactor;
+		
+		if (volume > loudestVolume) {
+			loudestPlace = place;
+			loudestVolume = volume;
 		}
 	});
 
-	if (nearestPlace && (lastNearbyPlaceId || nearestDistance <= minVolumeDistance)) {
-		const volume = getVolumeFromDistance(nearestDistance);
-
-		if (nearestPlace.id !== lastNearbyPlaceId) {
-			lastNearbyPlaceId = nearestPlace.id;
-			Spotify.playTrackForPlace(nearestPlace.id, volume);
-		} else {
-			Spotify.setVolume(volume);
+	if (loudestPlace) {
+		if (lastPlaceId || loudestVolume > 0) {
+			if (loudestPlace.id !== lastPlaceId) {
+				lastPlaceId = loudestPlace.id;
+				Spotify.playTrackForPlace(loudestPlace.id, loudestVolume);
+			} else {
+				Spotify.setVolume(loudestVolume);
+			}
 		}
-	} else {
-		lastNearbyPlaceId = null;
+	} else if (lastPlaceId) {
+		lastPlaceId = null;
 	}
 }
 
@@ -209,9 +203,10 @@ async function init() {
 
 	await Spotify.init();
 
-	checkNearbyToCenter();
-	map.on('move', checkNearbyToCenter);
-	map.on('zoom', checkNearbyToCenter);
+	updateLoudestPlace();
+	
+	map.on('move', updateLoudestPlace);
+	map.on('zoom', updateLoudestPlace);
 }
 
 init();
