@@ -143,7 +143,7 @@ function updateLoudestPlace() {
 		const mapDistanceVolumeFactor = getMapDistanceVolumeFactor(mapDistance);
 		const volume = mapDistanceVolumeFactor * mapDiagonalVolumeFactor;
 		
-		if (volume > loudestVolume) {
+		if (volume > loudestVolume || volume === loudestVolume && place.id === lastPlaceId) {
 			loudestPlace = place;
 			loudestVolume = volume;
 		}
