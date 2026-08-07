@@ -136,7 +136,7 @@ function updateLoudestPlace() {
 	}
 	
 	let loudestPlace = null;
-	let loudestVolume = 0;
+	let loudestVolume = -1;
 
 	places.forEach((place) => {
 		const mapDistance = L.latLng(place.latitude, place.longitude).distanceTo(mapCenter);
@@ -204,7 +204,7 @@ async function init() {
 	await Spotify.init();
 
 	updateLoudestPlace();
-	
+
 	map.on('move', updateLoudestPlace);
 	map.on('zoom', updateLoudestPlace);
 }
