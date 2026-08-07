@@ -2,7 +2,6 @@ import Place from '../place/place.js';
 import Translations from '../translations/translations.js';
 import Spotify from '../spotify/spotify.js';
 
-const PROXIMITY_RADIUS_METERS = 500;
 let places = [];
 let lastNearbyPlaceId = null;
 
@@ -115,35 +114,36 @@ async function loadPlaces() {
 	return data?.places || [];
 }
 
-function getDistanceMeters(lat1, lon1, lat2, lon2) {
-	const toRad = (value) => (value * Math.PI) / 180;
-	const R = 6371000;
-	const dLat = toRad(lat2 - lat1);
-	const dLon = toRad(lon2 - lon1);
-	const a =
-		Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-		Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-		Math.sin(dLon / 2) * Math.sin(dLon / 2);
-	const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-	return R * c;
-}
 
 function checkNearbyToCenter() {
-	const center = map.getCenter();
-	const latitude = center.lat;
-	const longitude = center.lng;
+	const minDistanceToPlace = 5000;
+	const mapDiagonalToHeightRatio = 0.28867513459481288225457439025098; // 1 / (2 * tg(60°))
+
+	const mapBounds = map.getBounds();
+	const mapCenter = mapBounds.getCenter();
+	const mapDiagonal = mapBounds.getNorthEast().distanceTo(mapBounds.getSouthWest());
+	const mapHeight = mapDiagonal * mapDiagonalToHeightRatio;
+
+	const getDistanceToView = (lat, lng) => {
+		const point = L.latLng(lat, lng);
+		const distanceToCenter = point.distanceTo(mapCenter);
+		const distanceToView = Math.sqrt(mapHeight * mapHeight + distanceToCenter * distanceToCenter);
+		return distanceToView;
+	}
+
 	let nearestPlace = null;
 	let nearestDistance = Infinity;
 
 	places.forEach((place) => {
-		const distance = getDistanceMeters(latitude, longitude, place.latitude, place.longitude);
+		const distance = getDistanceToView(place.latitude, place.longitude);
+
 		if (distance < nearestDistance) {
 			nearestDistance = distance;
 			nearestPlace = place;
 		}
 	});
 
-	if (nearestPlace && nearestDistance <= PROXIMITY_RADIUS_METERS) {
+	if (nearestPlace && nearestDistance <= minDistanceToPlace) {
 		if (nearestPlace.id !== lastNearbyPlaceId) {
 			lastNearbyPlaceId = nearestPlace.id;
 			Spotify.playTrackForPlace(nearestPlace.id);
