@@ -115,7 +115,7 @@ async function loadPlaces() {
 }
 
 function checkNearbyToCenter() {
-	const minVolumeDistance = 100_000;
+	const minVolumeDistance = 300_000;
 	const maxVolumeDistance = 30_000;
 	const mapDiagonalToHeightRatio = 0.2; // ~ (1 / (2 * tg(70°)))
 
@@ -151,7 +151,7 @@ function checkNearbyToCenter() {
 		}
 	});
 
-	if (nearestPlace && nearestDistance <= minVolumeDistance) {
+	if (nearestPlace && (lastNearbyPlaceId || nearestDistance <= minVolumeDistance)) {
 		const volume = getVolumeFromDistance(nearestDistance);
 
 		if (nearestPlace.id !== lastNearbyPlaceId) {
