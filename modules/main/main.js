@@ -114,9 +114,9 @@ async function loadPlaces() {
 	return data?.places || [];
 }
 
-
 function checkNearbyToCenter() {
-	const minDistanceToPlace = 100_000;
+	const minVolumeDistance = 100_000;
+	const maxVolumeDistance = 30_000;
 	const mapDiagonalToHeightRatio = 0.2; // ~ (1 / (2 * tg(70°)))
 
 	const mapBounds = map.getBounds();
@@ -131,6 +131,14 @@ function checkNearbyToCenter() {
 		return distanceToView;
 	}
 
+	const getVolumeFromDistance = (distance) => {
+		if (distance >= minVolumeDistance) return 0;
+		if (distance <= maxVolumeDistance) return 1;
+
+		const normalized = (distance - maxVolumeDistance) / (minVolumeDistance - maxVolumeDistance);
+		return Math.max(0, Math.min(1, 1 - normalized));
+	}
+
 	let nearestPlace = null;
 	let nearestDistance = Infinity;
 
@@ -143,10 +151,14 @@ function checkNearbyToCenter() {
 		}
 	});
 
-	if (nearestPlace && nearestDistance <= minDistanceToPlace) {
+	if (nearestPlace && nearestDistance <= minVolumeDistance) {
+		const volume = getVolumeFromDistance(nearestDistance);
+
 		if (nearestPlace.id !== lastNearbyPlaceId) {
 			lastNearbyPlaceId = nearestPlace.id;
-			Spotify.playTrackForPlace(nearestPlace.id);
+			Spotify.playTrackForPlace(nearestPlace.id, volume);
+		} else {
+			Spotify.setVolume(volume);
 		}
 	} else {
 		lastNearbyPlaceId = null;

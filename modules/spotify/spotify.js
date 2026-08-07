@@ -220,7 +220,35 @@ async function ensureSpotifyPlayer() {
   });
 }
 
-async function playTrackForPlace(placeId) {
+async function setPlaybackVolume(volume) {
+  if (!accessToken) {
+    console.warn('Spotify access token is missing, cannot set volume.');
+    return;
+  }
+
+  try {
+    await ensureSpotifyPlayer();
+
+    if (player && typeof player.setVolume === 'function') {
+      await player.setVolume(volume);
+      return;
+    }
+
+    if (deviceId) {
+      const volumePercent = Math.round(volume * 100);
+      await fetch(`https://api.spotify.com/v1/me/player/volume?device_id=${encodeURIComponent(deviceId)}&volume_percent=${volumePercent}`, {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+    }
+  } catch (error) {
+    console.error('Spotify volume request failed:', error);
+  }
+}
+
+async function playTrackForPlace(placeId, volume = 1) {
   const trackUri = TRACK_BY_PLACE[placeId];
   if (!trackUri) {
     console.info(`No Spotify track configured for place ${placeId}.`);
@@ -235,6 +263,7 @@ async function playTrackForPlace(placeId) {
 
   try {
     await ensureSpotifyPlayer();
+    await setPlaybackVolume(volume);
 
     if (!deviceId) {
       console.warn('Spotify device ID not available yet.');
@@ -250,10 +279,14 @@ async function playTrackForPlace(placeId) {
       body: JSON.stringify({ uris: [trackUri] }),
     });
 
-    console.info(`Playing Spotify track for ${placeId}`);
+    console.info(`Playing Spotify track for ${placeId} at volume ${volume.toFixed(2)}`);
   } catch (error) {
     console.error('Spotify playback request failed:', error);
   }
+}
+
+async function setVolume(volume) {
+  await setPlaybackVolume(volume);
 }
 
 function parseAuthorizationResponse() {
