@@ -182,35 +182,41 @@ async function ensureSpotifyPlayer() {
     throw new Error('Spotify access token is missing.');
   }
 
+  if (!window.Spotify?.Player) {
+    await (window.spotifyPlaybackSDKReadyPromise || Promise.resolve());
+  }
+
+  if (!window.Spotify?.Player) {
+    throw new Error('Spotify Web Playback SDK is not available.');
+  }
+
   return new Promise((resolve, reject) => {
     if (player) {
       resolve(player);
       return;
     }
 
-    window.onSpotifyWebPlaybackSDKReady = () => {
-      player = new window.Spotify.Player({
-        name: 'TravelMap Spotify Player',
-        getOAuthToken: (cb) => cb(accessToken),
-      });
+    player = new window.Spotify.Player({
+      name: 'TravelMap Spotify Player',
+      getOAuthToken: (cb) => cb(accessToken),
+    });
 
-      player.addListener('initialization_error', ({ message }) => console.error('Spotify initialization error:', message));
-      player.addListener('authentication_error', ({ message }) => console.error('Spotify authentication error:', message));
-      player.addListener('account_error', ({ message }) => console.error('Spotify account error:', message));
-      player.addListener('playback_error', ({ message }) => console.error('Spotify playback error:', message));
+    player.addListener('initialization_error', ({ message }) => console.error('Spotify initialization error:', message));
+    player.addListener('authentication_error', ({ message }) => console.error('Spotify authentication error:', message));
+    player.addListener('account_error', ({ message }) => console.error('Spotify account error:', message));
+    player.addListener('playback_error', ({ message }) => console.error('Spotify playback error:', message));
 
-      player.addListener('ready', ({ device_id }) => {
-        deviceId = device_id;
-        playerReady = true;
-        resolve(player);
-      });
+    player.addListener('ready', ({ device_id }) => {
+      deviceId = device_id;
+      playerReady = true;
+      resolve(player);
+    });
 
-      player.addListener('not_ready', ({ device_id }) => {
-        console.warn('Spotify device went offline:', device_id);
-      });
+    player.addListener('not_ready', ({ device_id }) => {
+      console.warn('Spotify device went offline:', device_id);
+    });
 
-      player.connect().catch(reject);
-    };
+    player.connect().catch(reject);
   });
 }
 
