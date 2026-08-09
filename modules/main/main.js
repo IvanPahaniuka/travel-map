@@ -3,8 +3,9 @@ import Translations from '../translations/translations.js';
 import Spotify from '../spotify/spotify.js';
 
 let places = [];
-let lastCenteredPlaceId = null;
+let currentCenteredPlaceId = null;
 
+// TODO add seek and resume track after focusing on previous place where track was paused (save all places last tracks with pasue position and time) (like a radio)
 // TODO add multiple music formats support (spotify or files) and array of songs
 // TODO implement loading data and files from files cloud (e.g. Google Drive) + with access token as parameter
 // TODO implement dialog window that asks to provide url to data.json if it wasn't provided as parameter to index.html (e.g. ?data_url=https://example.com/data.json) 
@@ -116,16 +117,24 @@ async function loadPlaces() {
 }
 
 function updateLoudestPlace() {
-	const centerThreshold = 80;
+	const pauseTrackRadiusPixels = 600;
+	const playTrackRadiusPixels = 300;
+	const switchTrackRadiusPixels = 100;
+	
 	const mapCenter = map.getCenter();
 	const mapCenterPoint = map.latLngToContainerPoint(mapCenter);
 
 	let centeredPlace = null;
 	let centeredDistance = Number.POSITIVE_INFINITY;
+	let lastCenteredDistance = Number.POSITIVE_INFINITY;
 
 	places.forEach((place) => {
 		const placePoint = map.latLngToContainerPoint(L.latLng(place.latitude, place.longitude));
 		const pixelDistance = Math.hypot(placePoint.x - mapCenterPoint.x, placePoint.y - mapCenterPoint.y);
+
+		if (place.id === currentCenteredPlaceId) {
+			lastCenteredDistance = pixelDistance;
+		}
 
 		if (pixelDistance < centeredDistance) {
 			centeredDistance = pixelDistance;
@@ -133,13 +142,15 @@ function updateLoudestPlace() {
 		}
 	});
 
-	if (centeredPlace && centeredDistance <= centerThreshold) {
-		if (centeredPlace.id !== lastCenteredPlaceId) {
-			lastCenteredPlaceId = centeredPlace.id;
+	if (currentCenteredPlaceId !== null && lastCenteredDistance > pauseTrackRadiusPixels) {
+		currentCenteredPlaceId = null;
+		Spotify.pause();
+	} else if (centeredPlace !== null && centeredPlace.id !== currentCenteredPlaceId) {
+		const playTrack = centeredDistance <= (currentCenteredPlaceId === null ? playTrackRadiusPixels : switchTrackRadiusPixels);
+		if (playTrack) {
+			currentCenteredPlaceId = centeredPlace.id;
 			Spotify.playTrackForPlace(centeredPlace.id);
 		}
-	} else if (lastCenteredPlaceId) {
-		lastCenteredPlaceId = null;
 	}
 }
 

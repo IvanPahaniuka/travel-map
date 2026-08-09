@@ -66,10 +66,45 @@ async function setVolume(volume) {
 
     if (player && typeof player.setVolume === 'function') {
       await player.setVolume(volume);
-      return;
     }
   } catch (error) {
     console.error('Spotify volume request failed:', error);
+  }
+}
+
+async function pause() {
+  try {
+    await connectSpotifyPlayer();
+
+    if (player && typeof player.pause === 'function') {
+      await player.pause();
+    }
+  } catch (error) {
+    console.error('Spotify pause request failed:', error);
+  }
+}
+
+async function resume() {
+  try {
+    await connectSpotifyPlayer();
+
+    if (player && typeof player.resume === 'function') {
+      await player.resume();
+    }
+  } catch (error) {
+    console.error('Spotify resume request failed:', error);
+  }
+}
+
+async function seek(positionMs) {
+  try {
+    await connectSpotifyPlayer();
+
+    if (player && typeof player.seek === 'function') {
+      await player.seek(positionMs);
+    }
+  } catch (error) {
+    console.error('Spotify seek request failed:', error);
   }
 }
 
@@ -125,6 +160,7 @@ async function init() {
 const Spotify = {
   init,
   playTrackForPlace,
+  pause,
 };
 
 export default Spotify;
