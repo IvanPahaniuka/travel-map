@@ -3,7 +3,7 @@ import Translations from '../translations/translations.js';
 import Spotify from '../spotify/spotify.js';
 
 let places = [];
-let lastPlaceId = null;
+let lastCenteredPlaceId = null;
 
 // TODO add multiple music formats support (spotify or files) and array of songs
 // TODO implement loading data and files from files cloud (e.g. Google Drive) + with access token as parameter
@@ -116,50 +116,30 @@ async function loadPlaces() {
 }
 
 function updateLoudestPlace() {
+	const centerThreshold = 80;
+	const mapCenter = map.getCenter();
+	const mapCenterPoint = map.latLngToContainerPoint(mapCenter);
 
-	const minVolumeDistance = 300_000;
-	const maxVolumeDistance = 50_000;
-
-	const minVolumeBoundsDistance = 2_000_000;
-	const maxVolumeBoundsDistance = 1_000_000;
-
-	const mapBounds = map.getBounds();
-	const mapCenter = mapBounds.getCenter();
-	const mapDiagonal = mapBounds.getNorthEast().distanceTo(mapBounds.getSouthWest());
-	const mapDiagonalVolumeFactor = 1 - Math.max(0, Math.min(1, (mapDiagonal - maxVolumeBoundsDistance) / (minVolumeBoundsDistance - maxVolumeBoundsDistance)));
-
-	const getMapDistanceVolumeFactor = (distance) => {
-		if (distance >= minVolumeDistance) return 0;
-		if (distance <= maxVolumeDistance) return 1;
-
-		return 1 - Math.max(0, Math.min(1, (distance - maxVolumeDistance) / (minVolumeDistance - maxVolumeDistance)));
-	}
-	
-	let loudestPlace = null;
-	let loudestVolume = -1;
+	let centeredPlace = null;
+	let centeredDistance = Number.POSITIVE_INFINITY;
 
 	places.forEach((place) => {
-		const mapDistance = L.latLng(place.latitude, place.longitude).distanceTo(mapCenter);
-		const mapDistanceVolumeFactor = getMapDistanceVolumeFactor(mapDistance);
-		const volume = mapDistanceVolumeFactor * mapDiagonalVolumeFactor;
-		
-		if (volume > loudestVolume || volume === loudestVolume && place.id === lastPlaceId) {
-			loudestPlace = place;
-			loudestVolume = volume;
+		const placePoint = map.latLngToContainerPoint(L.latLng(place.latitude, place.longitude));
+		const pixelDistance = Math.hypot(placePoint.x - mapCenterPoint.x, placePoint.y - mapCenterPoint.y);
+
+		if (pixelDistance < centeredDistance) {
+			centeredDistance = pixelDistance;
+			centeredPlace = place;
 		}
 	});
 
-	if (loudestPlace) {
-		if (lastPlaceId || loudestVolume > 0) {
-			if (loudestPlace.id !== lastPlaceId) {
-				lastPlaceId = loudestPlace.id;
-				Spotify.playTrackForPlace(loudestPlace.id, loudestVolume);
-			} else {
-				Spotify.setVolume(loudestVolume);
-			}
+	if (centeredPlace && centeredDistance <= centerThreshold) {
+		if (centeredPlace.id !== lastCenteredPlaceId) {
+			lastCenteredPlaceId = centeredPlace.id;
+			Spotify.playTrackForPlace(centeredPlace.id);
 		}
-	} else if (lastPlaceId) {
-		lastPlaceId = null;
+	} else if (lastCenteredPlaceId) {
+		lastCenteredPlaceId = null;
 	}
 }
 

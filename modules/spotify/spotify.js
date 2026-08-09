@@ -35,6 +35,7 @@ async function connectSpotifyPlayer() {
     player = new window.Spotify.Player({
       name: 'TravelMap Spotify Player',
       getOAuthToken: (cb) => cb(accessToken),
+      volume: 1,
     });
 
     player.addListener('initialization_error', ({ message }) => console.error('Spotify initialization error:', message));
@@ -72,7 +73,7 @@ async function setVolume(volume) {
   }
 }
 
-async function playTrackForPlace(placeId, volume = 1) {
+async function playTrackForPlace(placeId) {
   const trackUri = TRACK_BY_PLACE[placeId];
   if (!trackUri) {
     console.info(`No Spotify track configured for place ${placeId}.`);
@@ -87,7 +88,6 @@ async function playTrackForPlace(placeId, volume = 1) {
 
   try {
     await connectSpotifyPlayer();
-    await setVolume(volume);
 
     if (!deviceId) {
       console.warn('Spotify device ID not available yet.');
@@ -103,7 +103,7 @@ async function playTrackForPlace(placeId, volume = 1) {
       body: JSON.stringify({ uris: [trackUri] }),
     });
 
-    console.info(`Playing Spotify track for ${placeId} at volume ${volume.toFixed(2)}`);
+    console.info(`Playing Spotify track for ${placeId}`);
   } catch (error) {
     console.error('Spotify playback request failed:', error);
   }
@@ -125,7 +125,6 @@ async function init() {
 const Spotify = {
   init,
   playTrackForPlace,
-  setVolume,
 };
 
 export default Spotify;
