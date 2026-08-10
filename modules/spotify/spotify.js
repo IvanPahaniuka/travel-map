@@ -1,10 +1,5 @@
 import SpotifyAuth from './spotify-auth.js';
 
-const TRACK_BY_PLACE = {
-  'athens-september-2023': 'spotify:track:2TpxZ7JUBn3uw46aR7qd6V',
-  'batumi-july-2026': 'spotify:track:7GhIk7Il098yCjg4BQjzvb',
-};
-
 let player = null;
 let deviceId = null;
 
@@ -108,13 +103,7 @@ async function seek(positionMs) {
   }
 }
 
-async function playTrackForPlace(placeId) {
-  const trackUri = TRACK_BY_PLACE[placeId];
-  if (!trackUri) {
-    console.info(`No Spotify track configured for place ${placeId}.`);
-    return;
-  }
-
+async function play(trackUri) {
   const accessToken = await SpotifyAuth.getAccessToken(true);
   if (!accessToken) {
     console.warn('Spotify access token is missing, cannot play track.');
@@ -138,7 +127,7 @@ async function playTrackForPlace(placeId) {
       body: JSON.stringify({ uris: [trackUri] }),
     });
 
-    console.info(`Playing Spotify track for ${placeId}`);
+    console.info(`Playing Spotify track: ${trackUri}`);
   } catch (error) {
     console.error('Spotify playback request failed:', error);
   }
@@ -159,8 +148,9 @@ async function init() {
 
 const Spotify = {
   init,
-  playTrackForPlace,
+  play,
   pause,
+  resume,
 };
 
 export default Spotify;

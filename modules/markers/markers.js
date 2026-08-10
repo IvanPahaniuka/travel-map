@@ -12,6 +12,12 @@ function createMarkerIcon() {
 	});
 }
 
+function getRandomInt(min, max) {
+  const minCeiled = Math.ceil(min);
+  const maxFloored = Math.floor(max);
+  return Math.floor(Math.random() * (maxFloored - minCeiled) + minCeiled); // The maximum is exclusive and the minimum is inclusive
+}
+
 function updateLoudestPlace(map, places) {
 	const pauseTrackRadiusPixels = 500;
 	const playTrackRadiusPixels = 300;
@@ -38,14 +44,17 @@ function updateLoudestPlace(map, places) {
 		}
 	});
 
+    const centeredTracksUri = Array.isArray(centeredPlace.tracks) ? centeredPlace.tracks : [];
+
 	if (currentCenteredPlaceId !== null && lastCenteredDistance > pauseTrackRadiusPixels) {
 		currentCenteredPlaceId = null;
 		Spotify.pause();
-	} else if (centeredPlace !== null && centeredPlace.id !== currentCenteredPlaceId) {
+	} else if (centeredPlace !== null && centeredTracksUri.length > 0 && centeredPlace.id !== currentCenteredPlaceId) {
 		const playTrack = centeredDistance <= (currentCenteredPlaceId === null ? playTrackRadiusPixels : switchTrackRadiusPixels);
 		if (playTrack) {
+            const trackUri = centeredTracksUri[getRandomInt(0, centeredTracksUri.length)]
 			currentCenteredPlaceId = centeredPlace.id;
-			Spotify.playTrackForPlace(centeredPlace.id);
+			Spotify.play(trackUri);
 		}
 	}
 }

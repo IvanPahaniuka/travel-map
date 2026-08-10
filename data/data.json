@@ -9,6 +9,10 @@
 			},
 			"latitude": 37.983321151363675,
 			"longitude": 23.72735246279523,
+			"tracks": [
+				"spotify:track:2TpxZ7JUBn3uw46aR7qd6V",
+				"spotify:track:3BovdzfaX4jb5KFQwoPfAw"
+			],
 			"gallery": [
 				"./data/athens-2023/photo_2026-07-29_21-30-55.jpg",
 				"./data/athens-2023/photo_2026-07-30_23-18-26.jpg",
@@ -25,6 +29,10 @@
 			},
 			"latitude": 41.63961096087828,
 			"longitude": 41.61283673602739,
+			"tracks": [
+				"spotify:track:7GhIk7Il098yCjg4BQjzvb",
+				"spotify:track:1NHWG8zxSEypSRF3UufrnO"
+			],
 			"gallery": [
 				"./data/batumi-2026/photo_2026-07-28_22-57-52.jpg",
 				"./data/batumi-2026/photo_2026-07-28_22-58-51.jpg",
