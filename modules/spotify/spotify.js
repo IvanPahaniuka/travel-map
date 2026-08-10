@@ -103,7 +103,76 @@ async function seek(positionMs) {
   }
 }
 
-async function play(trackUri) {
+async function getPosition() {
+  const currentState = await getCurrentState();
+  return currentState?.position;
+}
+
+async function getDuration(trackUri = undefined) {
+  if (trackUri === undefined) {
+    const currentState = await getCurrentState();
+    return currentState?.duration;
+  } else {
+    const track = await getTrack(trackUri);
+    return track?.duration_ms;
+  }
+}
+
+async function getTrackName() {
+  const currentState = await getCurrentState();
+  return currentState?.track_window?.current_track?.name;
+}
+
+async function getCurrentState() {
+  try {
+    await connectSpotifyPlayer();
+
+    if (player && typeof player.getCurrentState === 'function') {
+      return await player.getCurrentState();
+    }
+  } catch (error) {
+    console.error('Spotify getCurrentState request failed:', error);
+  }
+}
+
+async function getTrack(trackUri) {
+  const accessToken = await SpotifyAuth.getAccessToken(true);
+  if (!accessToken) {
+    console.warn('Spotify access token is missing, cannot fetch track.');
+    return undefined;
+  }
+
+  const trackIdMatch = String(trackUri || '').match(
+    /(?:spotify:track:|https?:\/\/open\.spotify\.com\/track\/)?([A-Za-z0-9]+)(?:\?.*)?/
+  );
+  const trackId = trackIdMatch ? trackIdMatch[1] : null;
+
+  if (!trackId) {
+    console.warn('Invalid Spotify track URI:', trackUri);
+    return undefined;
+  }
+
+  try {
+    const response = await fetch(`https://api.spotify.com/v1/tracks/${encodeURIComponent(trackId)}`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Spotify track request failed (${response.status}): ${errorText}`);
+      return undefined;
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Spotify getTrack request failed:', error);
+    return undefined;
+  }
+}
+
+async function play(trackUri, position = 0) {
   const accessToken = await SpotifyAuth.getAccessToken(true);
   if (!accessToken) {
     console.warn('Spotify access token is missing, cannot play track.');
@@ -124,7 +193,7 @@ async function play(trackUri) {
         Authorization: `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ uris: [trackUri] }),
+      body: JSON.stringify({ uris: [trackUri], position_ms: position }),
     });
 
     console.info(`Playing Spotify track: ${trackUri}`);
@@ -151,6 +220,10 @@ const Spotify = {
   play,
   pause,
   resume,
+  seek,
+  getPosition,
+  getDuration,
+  getTrackName,
 };
 
 export default Spotify;
