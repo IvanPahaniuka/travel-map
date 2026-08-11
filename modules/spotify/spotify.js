@@ -91,6 +91,21 @@ async function resume() {
   }
 }
 
+async function next() {
+  try {
+    await connectSpotifyPlayer();
+
+    if (player && typeof player.nextTrack === 'function') {
+      await player.nextTrack();
+      return;
+    }
+
+    console.warn('Spotify next track is not available on this player instance.');
+  } catch (error) {
+    console.error('Spotify next track request failed:', error);
+  }
+}
+
 async function seek(positionMs) {
   try {
     await connectSpotifyPlayer();
@@ -133,6 +148,20 @@ async function getCurrentState() {
   } catch (error) {
     console.error('Spotify getCurrentState request failed:', error);
   }
+}
+
+function subscribeToPlayerState(callback) {
+  if (!callback || typeof callback !== 'function') {
+    return;
+  }
+
+  connectSpotifyPlayer().then(() => {
+    if (player && typeof player.addListener === 'function') {
+      player.addListener('player_state_changed', callback);
+    }
+  }).catch((error) => {
+    console.error('Spotify subscribe to player state failed:', error);
+  });
 }
 
 async function getTrack(trackUri) {
@@ -220,10 +249,13 @@ const Spotify = {
   play,
   pause,
   resume,
+  next,
   seek,
   getPosition,
   getDuration,
   getTrackName,
+  getCurrentState,
+  subscribeToPlayerState,
 };
 
 export default Spotify;

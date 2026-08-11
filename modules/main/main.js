@@ -1,5 +1,6 @@
 import Translations from '../translations/translations.js';
 import Spotify from '../spotify/spotify.js';
+import SpotifyPlayer from '../spotify/spotify-player.js';
 import Markers from '../markers/markers.js';
 
 
@@ -59,6 +60,7 @@ async function init() {
 	Translations.init(places);
 
 	await Spotify.init();
+	await SpotifyPlayer.init();
 
 	Markers.init(map, places);
 }
