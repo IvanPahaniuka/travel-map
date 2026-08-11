@@ -16,7 +16,7 @@ async function connectSpotifyPlayer() {
     throw new Error('Spotify Web Playback SDK is not available.');
   }
 
-  let accessToken = await SpotifyAuth.getAccessToken(true);
+  const accessToken = await SpotifyAuth.getAccessToken(true);
   if (!accessToken) {
     throw new Error('Spotify access token is missing.');
   }
@@ -29,18 +29,14 @@ async function connectSpotifyPlayer() {
 
     player = new window.Spotify.Player({
       name: 'TravelMap Spotify Player',
-      getOAuthToken: (cb) => cb(accessToken),
+      getOAuthToken: (cb) => SpotifyAuth.getAccessToken(true).then(at => cb(at)),
       volume: 1,
     });
 
     player.addListener('initialization_error', ({ message }) => console.error('Spotify initialization error:', message));
     player.addListener('account_error', ({ message }) => console.error('Spotify account error:', message));
     player.addListener('playback_error', ({ message }) => console.error('Spotify playback error:', message));
-
-    player.addListener('authentication_error', ({ message }) => {
-      console.error('Spotify authentication error:', message);
-      SpotifyAuth.getAccessToken(true).then((token) => accessToken = token);
-    });
+    player.addListener('authentication_error', ({ message }) => console.error('Spotify authentication error:', message));
 
     player.addListener('ready', ({ device_id }) => {
       deviceId = device_id;
