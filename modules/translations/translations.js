@@ -5,11 +5,17 @@ const translations = {
 		'spotify-dialog-title': 'Spotify Playback',
 		'spotify-dialog-message': 'Login to Spotify to enable music playback',
 		'spotify-dialog-button': 'Login to Spotify',
+
+		'spotify-player-track-title-empty': 'No active Spotify playback',
+		'spotify-player-track-title-unknown': 'Unknown track',
 	},
 	'ru': {
 		'spotify-dialog-title': 'Spotify Музыка',
 		'spotify-dialog-message': 'Войдите в Spotify, чтобы включить воспроизведение музыки',
 		'spotify-dialog-button': 'Войти в Spotify',
+
+		'spotify-player-track-title-empty': 'Нет активного Spotify трека',
+		'spotify-player-track-title-unknown': 'Неизвестный трек',
 	},
 };
 
