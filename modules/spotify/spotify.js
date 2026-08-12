@@ -63,18 +63,6 @@ async function setVolume(volume) {
   }
 }
 
-async function getVolume() {
-  try {
-    await connectSpotifyPlayer();
-
-    if (player && typeof player.getVolume === 'function') {
-      return await player.getVolume();
-    }
-  } catch (error) {
-    console.error('Spotify volume request failed:', error);
-  }
-}
-
 async function pause() {
   try {
     await connectSpotifyPlayer();
@@ -259,8 +247,6 @@ const Spotify = {
   resume,
   next,
   seek,
-  setVolume,
-  getVolume,
   getPosition,
   getDuration,
   getTrackName,
