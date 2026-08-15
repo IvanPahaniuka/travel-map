@@ -3,168 +3,142 @@ import SpotifyAuth from './spotify-auth.js';
 let player = null;
 let deviceId = null;
 
-async function connectSpotifyPlayer() {
+let ensureSdkPromise;
+function ensureSdkLoaded() {
+  return ensureSdkPromise ??= new Promise((resolve, reject) => {
+    window.onSpotifyWebPlaybackSDKReady = () => {
+      resolve();
+    }
+
+    const script = document.createElement("script");
+    script.src = "https://sdk.scdn.co/spotify-player.js";
+    script.async = true;
+
+    document.body.appendChild(script);
+  });
+
+  return ensureSdkPromise;
+}
+
+let ensureSpotifyPlayerReadyPromise;
+async function ensureSpotifyPlayerReady() {
   if (player) {
     return;
   }
 
-  if (!window.Spotify?.Player) {
-    await (window.spotifyPlaybackSDKReadyPromise || Promise.resolve());
+  if (ensureSpotifyPlayerReadyPromise) {
+    return ensureSpotifyPlayerReadyPromise;
   }
 
-  if (!window.Spotify?.Player) {
-    throw new Error('Spotify Web Playback SDK is not available.');
-  }
-
-  const accessToken = await SpotifyAuth.getAccessToken(true);
-  if (!accessToken) {
-    throw new Error('Spotify access token is missing.');
-  }
-
-  return new Promise((resolve, reject) => {
-    if (player) {
-      resolve(player);
-      return;
+  return ensureSpotifyPlayerReadyPromise ??= (async () => {
+    if (!window.Spotify?.Player) {
+      await ensureSdkLoaded();
     }
 
-    player = new window.Spotify.Player({
+    if (!window.Spotify?.Player) {
+      throw new Error('Spotify Web Playback SDK is not available.');
+    }
+
+    const accessToken = await SpotifyAuth.getAccessToken(false);
+    if (!accessToken) {
+      throw new Error('Spotify access token is missing. Unable to initialize Spotify player');
+    }
+
+    const spotifyPlayer = new window.Spotify.Player({
       name: 'TravelMap Spotify Player',
-      getOAuthToken: (cb) => SpotifyAuth.getAccessToken(true).then(at => cb(at)),
+      getOAuthToken: (cb) => SpotifyAuth.getAccessToken(false).then(at => cb(at)),
       volume: 1,
     });
 
-    player.addListener('initialization_error', ({ message }) => console.error('Spotify initialization error:', message));
-    player.addListener('account_error', ({ message }) => console.error('Spotify account error:', message));
-    player.addListener('playback_error', ({ message }) => console.error('Spotify playback error:', message));
-    player.addListener('authentication_error', ({ message }) => console.error('Spotify authentication error:', message));
+    spotifyPlayer.addListener('initialization_error', ({ message }) => console.warn(message));
+    spotifyPlayer.addListener('account_error', ({ message }) => console.warn(message));
+    spotifyPlayer.addListener('playback_error', ({ message }) => console.warn(message));
+    spotifyPlayer.addListener('authentication_error', ({ message }) => console.warn(message));
 
-    player.addListener('ready', ({ device_id }) => {
-      deviceId = device_id;
-      resolve(player);
-    });
+    try {
 
-    player.addListener('not_ready', ({ device_id }) => {
-      console.warn('Spotify device went offline:', device_id);
-    });
+      await new Promise((resolve, reject) => {
+        spotifyPlayer.addListener('ready', ({ device_id }) => {
+          deviceId = device_id;
+          resolve(spotifyPlayer);
+        });
 
-    player.connect().catch(reject);
+        spotifyPlayer.addListener('initialization_error', ({ message }) => reject(new Error(message)));
+        spotifyPlayer.addListener('account_error', ({ message }) => reject(new Error(message)));
+        spotifyPlayer.addListener('playback_error', ({ message }) => reject(new Error(message)));
+        spotifyPlayer.addListener('authentication_error', ({ message }) => reject(new Error(message)));
+
+        spotifyPlayer.connect().catch(reject);
+      });
+
+    } catch (error) {
+      try { spotifyPlayer.disconnect(); } catch {}
+      throw error;
+    }
+
+    player = spotifyPlayer;
+  })().catch((error) => { 
+    try { player?.disconnect(); } catch {}
+    player = null;
+    deviceId = null;
+    ensureSpotifyPlayerReadyPromise = null; 
+    throw error;
   });
 }
 
 async function setVolume(volume) {
-  try {
-    await connectSpotifyPlayer();
+  await ensureSpotifyPlayerReady();
+  await player.setVolume(volume);
+}
 
-    if (player && typeof player.setVolume === 'function') {
-      await player.setVolume(volume);
-    }
-  } catch (error) {
-    console.error('Spotify volume request failed:', error);
-  }
+async function getVolume() {
+  await ensureSpotifyPlayerReady();
+  return await player.getVolume();
 }
 
 async function pause() {
-  try {
-    await connectSpotifyPlayer();
-
-    if (player && typeof player.pause === 'function') {
-      await player.pause();
-    }
-  } catch (error) {
-    console.error('Spotify pause request failed:', error);
-  }
+  await ensureSpotifyPlayerReady();
+  await player.pause();
 }
 
 async function resume() {
-  try {
-    await connectSpotifyPlayer();
-
-    if (player && typeof player.resume === 'function') {
-      await player.resume();
-    }
-  } catch (error) {
-    console.error('Spotify resume request failed:', error);
-  }
+  await ensureSpotifyPlayerReady();
+  await player.resume();
 }
 
 async function next() {
-  try {
-    await connectSpotifyPlayer();
-
-    if (player && typeof player.nextTrack === 'function') {
-      await player.nextTrack();
-      return;
-    }
-
-    console.warn('Spotify next track is not available on this player instance.');
-  } catch (error) {
-    console.error('Spotify next track request failed:', error);
-  }
+  await ensureSpotifyPlayerReady();
+  await player.nextTrack();
 }
 
 async function seek(positionMs) {
-  try {
-    await connectSpotifyPlayer();
-
-    if (player && typeof player.seek === 'function') {
-      await player.seek(positionMs);
-    }
-  } catch (error) {
-    console.error('Spotify seek request failed:', error);
-  }
-}
-
-async function getPosition() {
-  const currentState = await getCurrentState();
-  return currentState?.position;
-}
-
-async function getDuration(trackUri = undefined) {
-  if (trackUri === undefined) {
-    const currentState = await getCurrentState();
-    return currentState?.duration;
-  } else {
-    const track = await getTrack(trackUri);
-    return track?.duration_ms;
-  }
-}
-
-async function getTrackName() {
-  const currentState = await getCurrentState();
-  return currentState?.track_window?.current_track?.name;
+  await ensureSpotifyPlayerReady();
+  await player.seek(positionMs);
 }
 
 async function getCurrentState() {
-  try {
-    await connectSpotifyPlayer();
-
-    if (player && typeof player.getCurrentState === 'function') {
-      return await player.getCurrentState();
-    }
-  } catch (error) {
-    console.error('Spotify getCurrentState request failed:', error);
-  }
+  await ensureSpotifyPlayerReady();
+  return await player.getCurrentState();
 }
 
-function subscribeToPlayerState(callback) {
+async function subscribeToPlayerState(callback) {
   if (!callback || typeof callback !== 'function') {
     return;
   }
 
-  connectSpotifyPlayer().then(() => {
-    if (player && typeof player.addListener === 'function') {
-      player.addListener('player_state_changed', callback);
-    }
-  }).catch((error) => {
-    console.error('Spotify subscribe to player state failed:', error);
-  });
+  await ensureSpotifyPlayerReady();
+  player.addListener('player_state_changed', callback);
 }
 
+const trackByTrackUriCache = {}
 async function getTrack(trackUri) {
-  const accessToken = await SpotifyAuth.getAccessToken(true);
+  if (trackByTrackUriCache[trackUri]) {
+    return trackByTrackUriCache[trackUri];
+  }
+
+  const accessToken = await SpotifyAuth.getAccessToken(false);
   if (!accessToken) {
-    console.warn('Spotify access token is missing, cannot fetch track.');
-    return undefined;
+    throw 'Spotify access token is missing, cannot fetch track.';
   }
 
   const trackIdMatch = String(trackUri || '').match(
@@ -173,58 +147,49 @@ async function getTrack(trackUri) {
   const trackId = trackIdMatch ? trackIdMatch[1] : null;
 
   if (!trackId) {
-    console.warn('Invalid Spotify track URI:', trackUri);
-    return undefined;
+    throw `Invalid Spotify track URI: ${trackUri}`;
   }
 
-  try {
-    const response = await fetch(`https://api.spotify.com/v1/tracks/${encodeURIComponent(trackId)}`, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
+  const response = await fetch(`https://api.spotify.com/v1/tracks/${encodeURIComponent(trackId)}`, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`Spotify track request failed (${response.status}): ${errorText}`);
-      return undefined;
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Spotify getTrack request failed:', error);
-    return undefined;
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw `Spotify track request failed (${response.status}): ${errorText}`;
   }
+
+  const result = await response.json();
+
+  trackByTrackUriCache[trackUri] = result;
+
+  return result;
 }
 
 async function play(trackUri, position = 0) {
-  const accessToken = await SpotifyAuth.getAccessToken(true);
+  const accessToken = await SpotifyAuth.getAccessToken(false);
   if (!accessToken) {
-    console.warn('Spotify access token is missing, cannot play track.');
-    return;
+    throw 'Spotify access token is missing, cannot play track.';
   }
 
-  try {
-    await connectSpotifyPlayer();
+  await ensureSpotifyPlayerReady();
 
-    if (!deviceId) {
-      console.warn('Spotify device ID not available yet.');
-      return;
-    }
-
-    await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${encodeURIComponent(deviceId)}`, {
-      method: 'PUT',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ uris: [trackUri], position_ms: position }),
-    });
-
-    console.info(`Playing Spotify track: ${trackUri}`);
-  } catch (error) {
-    console.error('Spotify playback request failed:', error);
+  if (!deviceId) {
+    throw 'Spotify device ID not available.';
   }
+
+  await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${encodeURIComponent(deviceId)}`, {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ uris: [trackUri], position_ms: position }),
+  });
+
+  console.info(`Playing Spotify track: ${trackUri}`);
 }
 
 async function init() {
@@ -234,7 +199,7 @@ async function init() {
   }
 
   try {
-    await connectSpotifyPlayer();
+    await ensureSpotifyPlayerReady();
   } catch (error) {
     console.error('Unable to initialize Spotify playback:', error);
   }
@@ -247,9 +212,9 @@ const Spotify = {
   resume,
   next,
   seek,
-  getPosition,
-  getDuration,
-  getTrackName,
+  setVolume,
+  getVolume,
+  getTrack,
   getCurrentState,
   subscribeToPlayerState,
 };

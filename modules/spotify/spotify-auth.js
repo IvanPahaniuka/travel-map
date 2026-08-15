@@ -1,5 +1,5 @@
 import Dialog from '../dialog/dialog.js';
-import Translations from '../translations/translations.js';
+import Translations from '../translations.js';
 import SpotifyAuthStorage from './spotify-auth-storage.js';
 
 const SPOTIFY_CLIENT_ID = '53f4f99e88604240ba44e392508ac865';
@@ -200,7 +200,7 @@ function parseAuthorizationResponse() {
 
 async function getAccessToken(openLoginDialogIfFailed = false) {
 	const [accessToken, expiresAt] = SpotifyAuthStorage.getAccessToken();
-	if (!accessToken || expiresAt < Date.now()) {
+	if (!accessToken || (expiresAt + 5 * 60 * 1000 < Date.now())) {
 		SpotifyAuthStorage.clearAccessToken();
 
 		try {

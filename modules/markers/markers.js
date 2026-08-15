@@ -1,9 +1,6 @@
 import Popup from "./popup.js";
-import Spotify from "../spotify/spotify.js";
-
-let currentTrackPlaceId = null;
-
-const trackStateByPlaceId = {}
+import Player from "../player/player.js";
+import Utils from "../utils.js";
 
 function createMarkerIcon() {
 	return L.divIcon({
@@ -20,21 +17,7 @@ function getRandomInt(min, max) {
   return Math.floor(Math.random() * (maxFloored - minCeiled) + minCeiled); // The maximum is exclusive and the minimum is inclusive
 }
 
-async function updateLoudestPlace(map, places) {
-
-    const stopCurrentTrack = async () => {
-        if (currentTrackPlaceId === null) return;
-
-        const trackState = trackStateByPlaceId[currentTrackPlaceId];
-        if (trackState) {
-            const position = await Spotify.getPosition();
-            trackState.position = position;
-            trackState.updatedAt = Date.now();
-        }
-
-		await Spotify.pause();
-		currentTrackPlaceId = null;
-    }
+async function updateCurrentPlaylist(map, places) {
 
 	const pauseTrackRadiusPixels = 500;
 	const playTrackRadiusPixels = 300;
@@ -47,11 +30,15 @@ async function updateLoudestPlace(map, places) {
 	let centeredDistance = Number.POSITIVE_INFINITY;
 	let lastCenteredDistance = Number.POSITIVE_INFINITY;
 
+	const playerState = Player.getState();
+	const playerPlaylist = playerState.currentPlaylist;
+	const playerPlaylistId = playerPlaylist?.id ?? null;
+
 	places.forEach((place) => {
 		const placePoint = map.latLngToContainerPoint(L.latLng(place.latitude, place.longitude));
 		const pixelDistance = Math.hypot(placePoint.x - mapCenterPoint.x, placePoint.y - mapCenterPoint.y);
 
-		if (place.id === currentTrackPlaceId) {
+		if (place.id === playerPlaylistId) {
 			lastCenteredDistance = pixelDistance;
 		}
 
@@ -61,48 +48,48 @@ async function updateLoudestPlace(map, places) {
 		}
 	});
 
-    const centeredTracksUri = Array.isArray(centeredPlace.tracks) ? centeredPlace.tracks : [];
+	const centeredTracks = Array.isArray(centeredPlace.tracks) ? centeredPlace.tracks : [];
 
-	if (currentTrackPlaceId !== null && lastCenteredDistance > pauseTrackRadiusPixels) {
-        await stopCurrentTrack();
-	} else if (centeredPlace !== null && centeredTracksUri.length > 0 && centeredPlace.id !== currentTrackPlaceId) {
-		const playTrack = centeredDistance <= (currentTrackPlaceId === null ? playTrackRadiusPixels : switchTrackRadiusPixels);
-		if (playTrack) {
-            await stopCurrentTrack();
-
-			currentTrackPlaceId = centeredPlace.id;
-
-            const trackState = trackStateByPlaceId[currentTrackPlaceId];
-            if (trackState && (trackState.position + Date.now() - trackState.updatedAt) < trackState.duration) {
-                const trackUri = trackState.uri;
-                const newPosition = trackState.position + Date.now() - trackState.updatedAt;
-
-                await Spotify.play(trackUri, newPosition);
-
-                trackState.position = newPosition;
-                trackState.updatedAt = Date.now();
-            } else {
-                const trackUri = centeredTracksUri[getRandomInt(0, centeredTracksUri.length)];
-                const duration = await Spotify.getDuration(trackUri);
-                const oldPosition = trackState?.position;
-                const newPosition = typeof oldPosition === "number" 
-                    ? (oldPosition % duration)
-                    : getRandomInt(0, duration);
-
-                await Spotify.play(trackUri, newPosition);
-
-                trackStateByPlaceId[currentTrackPlaceId] = {
-                    uri: trackUri,
-                    duration,
-                    position: newPosition,
-                    updatedAt: Date.now(),
-                };
-            }
+	if (centeredPlace !== null && centeredTracks.length > 0 && centeredPlace.id !== playerPlaylistId) {
+		const canChangePlaylist = centeredDistance <= (playerPlaylistId === null ? playTrackRadiusPixels : switchTrackRadiusPixels);
+		if (canChangePlaylist) {
+			await Player.changePlaylist(centeredPlace.id);
 		}
+	} else if (playerPlaylistId !== null && lastCenteredDistance > pauseTrackRadiusPixels) {
+		await Player.stop();
 	}
 }
 
-function init(map, places) {
+function initUpdateCurrentPlaylist(map, places) {
+	const singleUpdateCurrentPlaylist = Utils.createSingleExecutor(
+		'main-update-current-playlist',
+		updateCurrentPlaylist.bind(null, map, places),
+		true
+	);
+
+	singleUpdateCurrentPlaylist();
+
+	map.on('move', singleUpdateCurrentPlaylist);
+	map.on('zoom', singleUpdateCurrentPlaylist);
+}
+
+async function initPlaylists(places) {
+	const playerState = Player.getState();
+	if (playerState.playlists.length > 0) {
+		return;
+	}
+
+	for (const place of places) {
+		await Player.addPlaylist(
+			place.id, 
+			Array.isArray(place.tracks) ? place.tracks : []
+		);
+	}
+}
+
+async function init(map, places) {
+	await initPlaylists(places);
+
 	const markers = [];
 
 	places.forEach((place) => {
@@ -128,10 +115,7 @@ function init(map, places) {
 
     Popup.init(map);
 
-	updateLoudestPlace(map, places);
-
-	map.on('move', updateLoudestPlace.bind(undefined, map, places));
-	map.on('zoom', updateLoudestPlace.bind(undefined, map, places));
+	initUpdateCurrentPlaylist(map, places);
 }
 
 const Markers = {

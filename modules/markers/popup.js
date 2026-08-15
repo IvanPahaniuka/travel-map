@@ -1,5 +1,5 @@
 import Place from "../place/place.js";
-import Translations from "../translations/translations.js";
+import Translations from "../translations.js";
 
 let glightboxInstance = null;
 
