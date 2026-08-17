@@ -49,8 +49,8 @@ async function startSpotifyAuthorization() {
 	const codeVerifier = generateRandomString(64);
 	const codeChallenge = await generateCodeChallenge(codeVerifier);
 
-	SpotifyAuthStorage.saveAuthState(state);
-	SpotifyAuthStorage.saveAuthCodeVerifier(codeVerifier);
+	SpotifyAuthStorage.setAuthState(state);
+	SpotifyAuthStorage.setAuthCodeVerifier(codeVerifier);
 
 	const authUrl = new URL(AUTHORIZATION_ENDPOINT);
 	authUrl.searchParams.set('response_type', 'code');
@@ -122,19 +122,15 @@ async function exchangeCodeForToken(code) {
 
 	const payload = await response.json();
 	const accessToken = payload.access_token;
-	const expiresIn = Number(payload.expires_in);
 	const refreshToken = payload.refresh_token;
 	if (!accessToken) {
 		throw new Error('Spotify did not return an access token.');
 	}
-	if (!expiresIn) {
-		throw new Error('Spotify did not return an expires in for access token or it\'s not a number.');
-	}
 
-	SpotifyAuthStorage.saveAccessToken(accessToken, expiresIn);
+	SpotifyAuthStorage.setAccessToken(accessToken);
 
 	if (refreshToken) {
-		SpotifyAuthStorage.saveRefreshToken(refreshToken);
+		SpotifyAuthStorage.setRefreshToken(refreshToken);
 	}
 
 	SpotifyAuthStorage.clearAuthState();
@@ -144,7 +140,9 @@ async function exchangeCodeForToken(code) {
 async function refreshSpotifyAccessToken() {
 	const refreshToken = SpotifyAuthStorage.getRefreshToken();
 	if (!refreshToken) {
-		throw new Error('Spotify refresh token is missing.');
+		const error = new Error(`Spotify refresh token is missing.`);
+		error.code = 'invalid_grant';
+		throw error;
 	}
 
 	const body = new URLSearchParams({
@@ -163,25 +161,38 @@ async function refreshSpotifyAccessToken() {
 	});
 
 	if (!response.ok) {
-		const errorText = await response.text();
-		throw new Error(`Unable to refresh access token (${response.status}): ${errorText}`);
+		try {
+			const payload = await response.json();
+
+			const error = new Error(
+				`Unable to refresh access token (${response.status})` 
+				+ payload.error_description && `: ${payload.error_description}`
+			);
+
+			error.code = payload.error;
+			error.status = response.status;
+
+			throw error;
+		} catch {
+			const errorText = await response.text();
+			const error = new Error(
+				`Unable to refresh access token (${response.status}): ${errorText}`
+			);
+			throw error;
+		}
 	}
 
 	const payload = await response.json();
 	const accessToken = payload.access_token;
-	const expiresIn = Number(payload.expires_in);
 	const newRefreshToken = payload.refresh_token;
 	if (!accessToken) {
 		throw new Error('Spotify did not return a new access token.');
 	}
-	if (!expiresIn) {
-		throw new Error('Spotify did not return an expires in for access token or it\'s not a number.');
-	}
 
-	SpotifyAuthStorage.saveAccessToken(accessToken, expiresIn);
+	SpotifyAuthStorage.setAccessToken(accessToken);
 
 	if (newRefreshToken) {
-		SpotifyAuthStorage.saveRefreshToken(newRefreshToken);
+		SpotifyAuthStorage.setRefreshToken(newRefreshToken);
 	}
 }
 
@@ -199,23 +210,33 @@ function parseAuthorizationResponse() {
 }
 
 async function getAccessToken(openLoginDialogIfFailed = false) {
-	const [accessToken, expiresAt] = SpotifyAuthStorage.getAccessToken();
-	if (!accessToken || (expiresAt + 5 * 60 * 1000 < Date.now())) {
-		SpotifyAuthStorage.clearAccessToken();
+	const maxStaleTimeOnError = 5 * 24 * 60 * 60 * 1000;
+	const accessTokenRefreshInterval = 5 * 60 * 1000;
 
+	const [accessToken, updatedAt] = SpotifyAuthStorage.getAccessToken();
+	if (!accessToken || (updatedAt + accessTokenRefreshInterval < Date.now())) {
 		try {
 			await refreshSpotifyAccessToken();
 			const [newAccessToken] = SpotifyAuthStorage.getAccessToken();
 			return newAccessToken;
 		} catch (error) {
 			console.warn('Unable to refresh Spotify access token:', error);
-			SpotifyAuthStorage.clearRefreshToken();
+
+			if (error.code === 'invalid_grant' || (Date.now() - updatedAt > maxStaleTimeOnError)) {
+				SpotifyAuthStorage.clearAccessToken();
+				SpotifyAuthStorage.clearRefreshToken();
+			} else if (accessToken) {
+				return accessToken;
+			}
+
 			if (openLoginDialogIfFailed === true) {
 				openLoginDialog();
 			}
+
 			return undefined;
 		}
 	}
+
 	return accessToken;
 }
 
