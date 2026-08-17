@@ -61,12 +61,13 @@ async function onSpotifyStateChanged(spotifyState) {
     } = spotifyState;
 
     const spotifyTrackDetails = spotifyState.track_window?.current_track;
-    const spotifyTrack = spotifyTrackDetails?.uri;
+    const spotifyTrackUris = [spotifyTrackDetails?.uri, spotifyTrackDetails?.linked_from?.uri]
+        .filter(u => typeof u === 'string' && u.length > 0);
 
     const trackState = _state.currentTrackState;
     const track = trackState?.track;
 
-    if (trackState && spotifyTrack === track) {
+    if (trackState && spotifyTrackUris.includes(track)) {
         if (paused === true && position === 0) {
 
             trackState.position = spotifyTrackDetails.duration_ms;
