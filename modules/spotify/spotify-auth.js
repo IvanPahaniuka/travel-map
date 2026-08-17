@@ -1,5 +1,6 @@
 import Dialog from '../dialog/dialog.js';
 import Translations from '../translations.js';
+import Utils from '../utils.js';
 import SpotifyAuthStorage from './spotify-auth-storage.js';
 
 const SPOTIFY_CLIENT_ID = '53f4f99e88604240ba44e392508ac865';
@@ -64,28 +65,23 @@ async function startSpotifyAuthorization() {
 	window.location.assign(authUrl.toString());
 }
 
-let _loginDialogElement = null;
-function getLoginDialog() {
-	if (_loginDialogElement) return _loginDialogElement;
-
-	_loginDialogElement = Dialog.create({
-		titleClassName: 'spotify-dialog-title',
+const openLoginDialog = Utils.createSingleExecutor('spotify-auth-open-login-dialog', async () => {
+	const showResult = Dialog.show({
+		className: 'spotify-login-dialog',
 		title: Translations.get('spotify-dialog-title'),
-
-		messageClassName: 'spotify-dialog-message',
 		message: Translations.get('spotify-dialog-message'),
-
-		buttonClassName: 'spotify-dialog-button',
-		buttonLabelClassName: 'spotify-dialog-button-label',
-		buttonLabel: Translations.get('spotify-dialog-button'),
-
-		onButtonClick: () => {
-			startSpotifyAuthorization();
-		}
+		buttons: [
+			{
+				content: Translations.get('spotify-dialog-button'),
+				onClick: () => {
+					startSpotifyAuthorization();
+				},
+			}
+		],
 	});
 
-	return _loginDialogElement;
-}
+	return showResult.promise;
+}, true);
 
 async function generateCodeChallenge(codeVerifier) {
 	const hashed = await sha256(codeVerifier);
@@ -194,11 +190,6 @@ async function refreshSpotifyAccessToken() {
 	if (newRefreshToken) {
 		SpotifyAuthStorage.setRefreshToken(newRefreshToken);
 	}
-}
-
-function openLoginDialog() {
-	const dialog = getLoginDialog();
-	dialog.open();
 }
 
 function parseAuthorizationResponse() {

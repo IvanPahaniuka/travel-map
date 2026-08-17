@@ -1,71 +1,108 @@
-let dialogInstance = null;
+import showWithContentOnly from "./dialog-content-only.js";
 
-function createOverlay() {
-  const overlay = document.createElement('div');
-  overlay.className = 'dialog-overlay';
-  overlay.classList.add('dialog-hidden');
-  document.body.appendChild(overlay);
-  return overlay;
-}
+/**
+ * @typedef DialogShowResult
+ * @type {import("./dialog-content-only.js").DialogShowResult}
+ */
 
-function createDialog({
-  title,
-  titleClassName = undefined,
-  message,
-  messageClassName = undefined,
-  buttonClassName = undefined,
-  buttonLabel,
-  buttonLabelClassName = undefined,
-  onButtonClick,
-  onClose = undefined,
-}) {
-  if (dialogInstance) {
-    throw new Error('A dialog is already open. Close it before creating a new one.');
-  }
+/**
+ * @typedef DialogButtonParams
+ * @type {object}
+ * @property {string | undefined} content
+ * @property {((close: (result: any) => void) => void) | undefined} onClick
+ */
 
-  const overlay = createOverlay();
-  const dialog = document.createElement('div');
-  dialog.className = 'dialog-content';
-  dialog.innerHTML = `
-    <h2${ titleClassName ? ` class="${titleClassName}"` : '' }>${title}</h2>
-    <p${ messageClassName ? ` class="${messageClassName}"` : '' }>${message}</p>
-    <button type="button" class="dialog-button${ buttonClassName ? ` ${buttonClassName}` : '' }">
-        <span ${ buttonLabelClassName ? ` class="${buttonLabelClassName}"` : '' }>${buttonLabel}</span>
-    </button>
-  `;
+/**
+ * @typedef DialogParams
+ * @type {object}
+ * @property {string | undefined} className
+ * @property {string | undefined} title
+ * @property {string | undefined} message 
+ * @property {DialogButtonParams[] | undefined} buttons 
+ * @property {HTMLElement | undefined} content
+ */
 
-  const button = dialog.querySelector('.dialog-button');
-  button.addEventListener('click', (event) => {
-    event.stopPropagation();
-    if (typeof onButtonClick === 'function') {
-      onButtonClick();
-    }
-  });
+/**
+ * @function
+ * @param {DialogParams} params 
+ * @returns {DialogShowResult}
+ */
+function show(params) {
 
-  overlay.addEventListener('click', (event) => {
-    if (event.target !== overlay) return;
-    if (typeof onClose === 'function') {
-      onClose();
-    }
-    closeDialog();
-  });
+	let close;
 
-  overlay.appendChild(dialog);
+	const elements = [
+		createTitleElement(params.title),
+		createMessageElement(params.message),
+		params.content,
+		createButtonsElement(params.buttons),
+	].filter(e => e);
 
-  function openDialog() {
-    overlay.classList.remove('dialog-hidden');
-  }
+	let contentElement;
+	if (elements.length === 1 && params.content) {
+		contentElement = params.content;
+	} else {
+		const contentGroupElement = document.createElement('div');
+		contentGroupElement.className = 'dialog-content-group';
+		contentGroupElement.append(...elements);
+		contentElement = contentGroupElement;
+	}
 
-  function closeDialog() {
-    overlay.classList.add('dialog-hidden');
-  }
+	const result = showWithContentOnly({
+		className: params.className,
+		content: contentElement,
+	});
 
-  dialogInstance = { element: overlay, open: openDialog, close: closeDialog };
-  return dialogInstance;
+	close = result.close;
+
+	return result;
+
+	function createTitleElement(title) {
+		if (typeof title === 'string') {
+			const element = document.createElement('h2');
+			element.className = 'dialog-title';
+			element.innerText = title;
+			return element;
+		} else {
+			return null;
+		}
+	}
+	function createMessageElement(message) {
+		if (typeof message === 'string') {
+			const element = document.createElement('p');
+			element.className = 'dialog-message';
+			element.innerText = message;
+			return element;
+		} else {
+			return null;
+		}
+	}
+	function createButtonsElement(/** @type {DialogButtonParams[] | undefined} */ buttons) {
+		buttons = Array.isArray(buttons)
+			? buttons.filter(b => typeof b === 'object')
+			: [];
+
+		if (buttons.length > 0) {
+			const groupElement = document.createElement('div');
+			groupElement.className = 'dialog-buttons-group';
+			buttons.forEach(b => {
+				const buttonElement = document.createElement('button');
+				buttonElement.className = 'dialog-button';
+				buttonElement.textContent = b.content;
+				if (typeof b.onClick === 'function') {
+					buttonElement.onclick = () => b.onClick(close);
+				}
+				groupElement.appendChild(buttonElement);
+			});
+			return groupElement;
+		} else {
+			return null;
+		}
+	}
 }
 
 const Dialog = {
-  create: createDialog,
+	show,
 }
 
 export default Dialog;
