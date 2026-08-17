@@ -57,7 +57,7 @@ async function init() {
 
 	const places = await loadPlaces();
 
-	Translations.init(places);
+	Translations.addPlaces(places);
 
 	await Spotify.init();
 	await PlayerWidget.init();

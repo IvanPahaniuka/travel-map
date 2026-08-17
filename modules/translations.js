@@ -30,20 +30,6 @@ function get(key, language = undefined) {
 	return (translations[language] ?? translations['default'])[key] ?? translations['default'][key] ?? '';
 }
 
-function apply() {
-	const language = getPreferredLanguage();
-
-	Object.keys(translations['default']).forEach((key) => {
-		const translation = get(key, language);
-		const elements = document.getElementsByClassName(key);
-		if (elements) {
-			for (let i = 0; i < elements.length; i++) {
-				elements[i].textContent = translation;
-			}
-		}
-	});
-}
-
 function add(key, value, language = undefined) {
 	if (typeof value === 'string') {
 		language = language || 'default';
@@ -58,26 +44,16 @@ function add(key, value, language = undefined) {
 	}
 }
 
-function init(places = undefined) {
+function addPlaces(places = undefined) {
 
 	places?.forEach((place) => {
 		add(Place.getTitleClassName(place.id), place.title);
 	});
 
-	try {
-		window.removeEventListener('languagechange', apply);
-	} catch (e) { /* ignore */ }
-
-	if ('onlanguagechange' in window) {
-		window.addEventListener('languagechange', apply);
-	}
-
-	apply();
 }
 
 const Translations = {
-	init,
-	apply,
+	addPlaces,
 	add,
 	get,
 };
