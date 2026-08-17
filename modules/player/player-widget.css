@@ -56,7 +56,7 @@
   height: 2.5rem;
   border: none;
   border-radius: 999px;
-  background: #1db954;
+  background: var(--accent, #adadad);
   color: #fff;
   font-size: 1rem;
   cursor: pointer;
@@ -68,7 +68,7 @@
 
 .player-widget-button:hover {
   transform: scale(1.05);
-  background: #14883c;
+  background: var(--accent-strong, #7c7c7c);
 }
 
 .player-widget-button:disabled {
