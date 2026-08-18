@@ -89,19 +89,15 @@ function createPlayerDom() {
   playerContainer.id = PLAYER_ID;
   playerContainer.innerHTML = `
     <div class="player-widget-inner">
+      <button id="${VOLUME_BUTTON_ID}" type="button" class="player-widget-button" aria-label="Toggle volume">
+        ${VOLUME_ON_ICON}
+      </button>
       <div class="player-widget-track">
         <div id="${TRACK_TITLE_ID}" class="player-widget-track-title"></div>
       </div>
-      <div class="player-widget-controls">
-        <div class="player-widget-button-group">
-          <button id="${VOLUME_BUTTON_ID}" type="button" class="player-widget-button" aria-label="Toggle volume">
-            ${VOLUME_ON_ICON}
-          </button>
-          <button id="${NEXT_BUTTON_ID}" type="button" class="player-widget-button" aria-label="Next track">
-            ${NEXT_ICON}
-          </button>
-        </div>
-      </div>
+      <button id="${NEXT_BUTTON_ID}" type="button" class="player-widget-button" aria-label="Next track">
+        ${NEXT_ICON}
+      </button>
     </div>
   `;
 
