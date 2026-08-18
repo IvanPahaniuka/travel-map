@@ -2,8 +2,9 @@ import Translations from '../translations.js';
 import Player from './player.js';
 
 const PLAYER_ID = 'player-widget';
-const TRACK_TITLE_ID = 'player-widget-track-title';
-const VOLUME_BUTTON_ID = 'spotify-player-volume';
+const TRACK_NAME_ID = 'player-widget-track-name';
+const TRACK_ARTISTS_ID = 'player-widget-track-artists';
+const VOLUME_BUTTON_ID = 'player-widget-volume';
 const NEXT_BUTTON_ID = 'player-widget-next';
 
 const NEXT_ICON = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M8.58124 8.12946L12.8608 11.1863C13.4191 11.5851 13.4191 12.4149 12.8608 12.8137L8.58124 15.8705C7.91937 16.3433 7 15.8702 7 15.0568V8.94319C7 8.12982 7.91937 7.65669 8.58124 8.12946Z" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M17 8V16" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
@@ -47,11 +48,12 @@ function attachEventHandlers() {
 }
 
 function render() {
-  const titleElement = document.getElementById(TRACK_TITLE_ID);
+  const trackNameElement = document.getElementById(TRACK_NAME_ID);
+  const trackArtistsElement = document.getElementById(TRACK_ARTISTS_ID);
   const volumeButton = document.getElementById(VOLUME_BUTTON_ID);
   const nextButton = document.getElementById(NEXT_BUTTON_ID);
 
-  if (!titleElement || !nextButton) {
+  if (!trackNameElement || !nextButton) {
     return;
   }
 
@@ -60,15 +62,24 @@ function render() {
   const trackState = playlist?.currentTrackState;
 
   if (!playlist || !trackState) {
-    titleElement.textContent = Translations.get('player-widget-track-title-empty');
+    trackNameElement.textContent = Translations.get('player-widget-track-name-empty');
+    trackArtistsElement.textContent = '';
+    trackArtistsElement.style = 'display: none';
     nextButton.disabled = true;
   } else {
-    const artists = trackState.artists ?? [];
-    const title = [trackState.name, ...artists]
-      .filter(n => typeof n === "string" && n.length > 0)
-      .join(' • ');
+    const trackName = trackState.name;
+    const trackArtists = (trackState.artists ?? []).filter(n => typeof n === "string" && n.length > 0).join(' • ');
     
-    titleElement.textContent = title || Translations.get('player-widget-track-title-unknown');
+    trackNameElement.textContent = trackName || Translations.get('player-widget-track-name-unknown');
+
+    if (trackArtists) {
+      trackArtistsElement.textContent = trackArtists;
+      trackArtistsElement.style = '';
+    } else {
+      trackArtistsElement.textContent = '';
+      trackArtistsElement.style = 'display: none';
+    }
+
     nextButton.disabled = false;
   }
   
@@ -89,15 +100,18 @@ function createPlayerDom() {
   playerContainer.id = PLAYER_ID;
   playerContainer.innerHTML = `
     <div class="player-widget-inner">
-      <button id="${VOLUME_BUTTON_ID}" type="button" class="player-widget-button" aria-label="Toggle volume">
-        ${VOLUME_ON_ICON}
-      </button>
       <div class="player-widget-track">
-        <div id="${TRACK_TITLE_ID}" class="player-widget-track-title"></div>
+        <div id="${TRACK_NAME_ID}" class="player-widget-track-name"></div>
+        <div id="${TRACK_ARTISTS_ID}" class="player-widget-track-artists"></div>
       </div>
-      <button id="${NEXT_BUTTON_ID}" type="button" class="player-widget-button" aria-label="Next track">
-        ${NEXT_ICON}
-      </button>
+      <div class="player-widget-buttons-group">
+        <button id="${VOLUME_BUTTON_ID}" type="button" class="player-widget-button" aria-label="Toggle volume">
+          ${VOLUME_ON_ICON}
+        </button>
+        <button id="${NEXT_BUTTON_ID}" type="button" class="player-widget-button" aria-label="Next track">
+          ${NEXT_ICON}
+        </button>
+      </div>
     </div>
   `;
 
