@@ -95,8 +95,6 @@ function subscribeToSpotifyStateChanged() {
 }
 
 function getState() {
-    subscribeToSpotifyStateChanged();
-
     return {
         volume: _state.volume,
         currentTrackState: _state.currentTrackState && { ..._state.currentTrackState },
@@ -136,8 +134,8 @@ async function stop() {
 }
 
 async function setVolume(volume) {
-    await Spotify.setVolume(volume);
     _state.volume = volume;
+    await Spotify.setVolume(volume);
     notifyListencer('state_changed');
 }
 
@@ -171,8 +169,6 @@ function addEventListener(/** @type {PlaybackEvent} */ event, listener) {
 		console.warn('Listener must be a function');
 		return;
 	}
-
-    subscribeToSpotifyStateChanged();
 
 	if (event === 'state_changed') {
 		stateChangedListeners.push(listener);

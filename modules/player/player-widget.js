@@ -61,18 +61,17 @@ function render() {
 
   if (!playlist || !trackState) {
     titleElement.textContent = Translations.get('player-widget-track-title-empty');
-    volumeButton.disabled = true;
     nextButton.disabled = true;
-    return;
+  } else {
+    const artists = trackState.artists ?? [];
+    const title = [trackState.name, ...artists]
+      .filter(n => typeof n === "string" && n.length > 0)
+      .join(' • ');
+    
+    titleElement.textContent = title || Translations.get('player-widget-track-title-unknown');
+    nextButton.disabled = false;
   }
-
-  const artists = trackState.artists ?? [];
-  const title = [trackState.name, ...artists]
-    .filter(n => typeof n === "string" && n.length > 0)
-    .join(' • ');
-  titleElement.textContent = title || Translations.get('player-widget-track-title-unknown');
-  volumeButton.disabled = false;
-  nextButton.disabled = false;
+  
   volumeButton.innerHTML = volume > 0 ? VOLUME_ON_ICON : VOLUME_OFF_ICON;
 }
 

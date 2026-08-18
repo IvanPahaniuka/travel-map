@@ -44,20 +44,37 @@ import Playbacks from './playbacks.js';
  * @property {InternalPlaylist | null} currentPlaylist
  */
 
+/**
+ * @typedef PlayerEvent
+ * @type {'state_changed'}
+ */
+
+/**
+ * @typedef Playlist
+ * @type {object}
+ * @property {string} id
+ * @property {Track[]} tracks
+ * @property {TrackState | null} currentTrackState
+ */
+
+/**
+ * @typedef PlayerState
+ * @type {object}
+ * @property {number} volume
+ * @property {Playlist[]} playlists
+ * @property {Playlist | null} currentPlaylist
+ */
+
 /** @type {InternalState} */
 const _state = {
-	volume: 1,
+	volume: 0,
 	playlists: [],
 	currentPlaylist: null,
 };
 
-const stateChangedListeners = [];
-
-/** @type {[Playback, Function][]} */
-const playbackStateChangedListeners = [];
-
 /**
  * Get the current state
+ * @returns {PlayerState}
  */
 function getState() {
 	const playlistsMapped = _state.playlists.map(p => ({
@@ -137,6 +154,8 @@ async function onPlaybackStateChanged(/** @type {Playback} */ playback) {
 	}
 }
 
+/** @type {[Playback, Function][]} */
+const playbackStateChangedListeners = [];
 function subscribeToPlaybackStateChanged(/** @type {Playback} */ playback) {
 	const hasListener = playbackStateChangedListeners.some(ph => ph[0] === playback);
 	if (hasListener) {
@@ -160,7 +179,7 @@ function subscribeToPlaybackStateChanged(/** @type {Playback} */ playback) {
 /**
  * Add a new playlist with tracks
  */
-async function addPlaylist(id, tracks) {
+async function addPlaylist(/** @type {string} */ id, /** @type {Track[]} */ tracks) {
 	if (!id || !Array.isArray(tracks)) {
 		console.warn('Invalid playlist data: id and tracks array required');
 		return;
@@ -207,7 +226,7 @@ async function addPlaylist(id, tracks) {
 /**
  * Remove a playlist
  */
-async function removePlaylist(id) {
+async function removePlaylist(/** @type {string} */ id) {
 	if (_state.currentPlaylist?.id === id) {
 		await stop();
 	}
@@ -226,7 +245,7 @@ async function removePlaylist(id) {
 /**
  * Switch to a different playlist and start playing
  */
-async function changePlaylist(id) {
+async function changePlaylist(/** @type {string} */ id) {
 
 	const tryPlayCurrentTrack = async (/** @type {InternalPlaylist} */ playlist) => {
 
@@ -253,6 +272,7 @@ async function changePlaylist(id) {
 		_state.currentPlaylist = playlist;
 
 		try {
+			await trackPlayback.setVolume(_state.volume);
 			await trackPlayback.play(track, trackPositionNew);
 		} catch (error) {
 			console.error(error);
@@ -314,6 +334,7 @@ async function changePlaylist(id) {
 		_state.currentPlaylist = playlist;
 
 		try {
+			await trackPlayback.setVolume(_state.volume);
 			await trackPlayback.play(track, trackPosition);
 		} catch (error) {
 			console.error(error);
@@ -347,7 +368,7 @@ async function changePlaylist(id) {
 /**
  * Set volume for the player
  */
-async function setVolume(volume) {
+async function setVolume(/** @type {number} */ volume) {
 	_state.volume = volume;
 
 	const currentPlaylist = _state.currentPlaylist;
@@ -374,7 +395,7 @@ async function next() {
 	const playlist = _state.currentPlaylist;
 	if (!playlist) {
 		console.warn('No playlist currently playing');
-		return;
+		return false;
 	}
 
 	const possibleTrackIndexes = getPossibleTrackIndexes(playlist);
@@ -412,12 +433,15 @@ async function next() {
 	};
 
 	try {
+		await trackPlayback.setVolume(_state.volume);
 		await trackPlayback.play(track, 0);
 	} catch (error) {
 		console.error(error);
 	}
 
 	notifyListenersDeferred('state_changed');
+
+	return true;
 }
 
 /**
@@ -444,23 +468,27 @@ async function stop() {
 	notifyListenersDeferred('state_changed');
 }
 
+let stateChangedListeners = [];
+let stateChangedListenersNotifying = null;
 /**
  * Notify all listeners of state changes
  */
-function notifyListeners(event) {
+function notifyListeners(/** @type {PlayerEvent} */ event) {
 	if (event === 'state_changed') {
-		stateChangedListeners.forEach(listener => {
+		stateChangedListenersNotifying = stateChangedListeners;
+		stateChangedListenersNotifying.forEach(listener => {
 			try {
 				listener();
 			} catch (error) {
 				console.error('Error notifying listener:', error);
 			}
 		});
+		stateChangedListenersNotifying = null;
 	}
 }
 
 let stateChangedTimeoutId;
-function notifyListenersDeferred(event) {
+function notifyListenersDeferred(/** @type {PlayerEvent} */ event) {
 	const timeoutId = setTimeout(notifyListeners, 0, event);
 
 	if (event === 'state_changed') {
@@ -472,13 +500,17 @@ function notifyListenersDeferred(event) {
 /**
  * Add an event listener for state changes
  */
-function addEventListener(event, listener) {
+function addEventListener(/** @type {PlayerEvent} */ event, /** @type {() => void} */ listener) {
 	if (typeof listener !== 'function') {
 		console.warn('Listener must be a function');
 		return;
 	}
 
 	if (event === 'state_changed') {
+		if (stateChangedListenersNotifying === stateChangedListeners) {
+			stateChangedListeners = [...stateChangedListeners];
+		} 
+
 		stateChangedListeners.push(listener);
 	}
 }
@@ -486,10 +518,14 @@ function addEventListener(event, listener) {
 /**
  * Remove an event listener
  */
-function removeEventListener(event, listener) {
+function removeEventListener(/** @type {PlayerEvent} */ event, /** @type {() => void} */ listener) {
 	if (event === 'state_changed') {
 		const index = stateChangedListeners.indexOf(listener);
 		if (index !== -1) {
+			if (stateChangedListenersNotifying === stateChangedListeners) {
+				stateChangedListeners = [...stateChangedListeners];
+			} 
+
 			stateChangedListeners.splice(index, 1);
 		}
 	}

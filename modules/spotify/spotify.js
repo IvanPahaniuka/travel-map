@@ -193,16 +193,7 @@ async function play(trackUri, position = 0) {
 }
 
 async function init() {
-  const authenticated = await SpotifyAuth.init();
-  if (!authenticated) {
-    return;
-  }
-
-  try {
-    await ensureSpotifyPlayerReady();
-  } catch (error) {
-    console.error('Unable to initialize Spotify playback:', error);
-  }
+  await SpotifyAuth.init();
 }
 
 const Spotify = {

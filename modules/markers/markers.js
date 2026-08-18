@@ -67,10 +67,34 @@ function initUpdateCurrentPlaylist(map, places) {
 		true
 	);
 
-	singleUpdateCurrentPlaylist();
+	Player.addEventListener('state_changed', onPlayerStateChanged);
 
-	map.on('move', singleUpdateCurrentPlaylist);
-	map.on('zoom', singleUpdateCurrentPlaylist);
+	let isUpdateCurrentPlaylistActive = false;
+	function onPlayerStateChanged() {
+		const state = Player.getState();
+
+		if (state.volume === 0 && isUpdateCurrentPlaylistActive) {
+			isUpdateCurrentPlaylistActive = false;
+
+			map.off('move', singleUpdateCurrentPlaylist);
+			map.off('zoom', singleUpdateCurrentPlaylist);
+
+			Player.stop();
+
+			return;
+		}
+		
+		if (state.volume > 0 && !isUpdateCurrentPlaylistActive) {
+			isUpdateCurrentPlaylistActive = true;
+
+			map.on('move', singleUpdateCurrentPlaylist);
+			map.on('zoom', singleUpdateCurrentPlaylist);
+
+			singleUpdateCurrentPlaylist();
+
+			return;
+		}
+	}
 }
 
 async function initPlaylists(places) {
