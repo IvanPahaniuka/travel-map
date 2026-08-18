@@ -141,13 +141,14 @@ async function onPlaybackStateChanged(/** @type {Playback} */ playback) {
 	if (track === playbackState.currentTrackState?.track) {
 		
 		const positionNew = playbackState.currentTrackState.position;
+		const updatedAtNew = playbackState.currentTrackState.updatedAt;
 
 		if (typeof positionNew === 'number') {
 			if (positionNew >= trackState.duration) {
 				await next();
-			} else {
+			} else if (updatedAtNew && trackState.updatedAt < updatedAtNew) {
 				trackState.position = positionNew;
-				trackState.updatedAt = Date.now();
+				trackState.updatedAt = updatedAtNew;
 				notifyListenersDeferred('state_changed');
 			}
 		}

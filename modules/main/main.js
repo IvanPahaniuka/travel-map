@@ -3,6 +3,7 @@ import Spotify from '../spotify/spotify.js';
 import PlayerWidget from "../player/player-widget.js";
 import Markers from '../markers/markers.js';
 
+// TODO add image to player
 // TODO add settings button
 // TODO add seek and resume track after focusing on previous place where track was paused (save all places last tracks with pasue position and time) (like a radio)
 // TODO add multiple music formats support (spotify or files) and array of songs

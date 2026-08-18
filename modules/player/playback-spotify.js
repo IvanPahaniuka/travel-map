@@ -57,7 +57,8 @@ function extractTrackId(/** @type {Track} */ track) {
 async function onSpotifyStateChanged(spotifyState) {
     const { 
         position, 
-        paused
+        paused,
+        timestamp
     } = spotifyState;
 
     const spotifyTrackDetails = spotifyState.track_window?.current_track;
@@ -74,10 +75,10 @@ async function onSpotifyStateChanged(spotifyState) {
             trackState.updatedAt = Date.now();
             notifyListencer('state_changed');
 
-        } else {
+        } else if (timestamp && trackState.updatedAt < timestamp) {
 
             trackState.position = position;
-            trackState.updatedAt = Date.now();
+            trackState.updatedAt = timestamp;
             notifyListencer('state_changed');
 
         }
