@@ -11,7 +11,7 @@
 	line-height: 1.6;
 }
 
-.dialog-button {
+.dialog-content .dialog-button {
 	appearance: none;
 	border: none;
 	background: var(--accent);
@@ -23,6 +23,6 @@
 	transition: background 0.2s ease;
 }
 
-.dialog-button:hover {
+.dialog-content .dialog-button:hover {
 	background: var(--accent-strong);
 }

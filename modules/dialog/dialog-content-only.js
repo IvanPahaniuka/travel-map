@@ -24,6 +24,7 @@ function show(params) {
 
   const dialogElement = document.createElement('dialog');
   dialogElement.className = ['dialog-content', params.className].filter(cn => typeof cn === 'string' && cn.length > 0).join(' ');
+  dialogElement.closedBy = 'any';
   if (params.content) {
     dialogElement.appendChild(params.content);
   }
