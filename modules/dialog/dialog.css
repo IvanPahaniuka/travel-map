@@ -11,11 +11,16 @@
 	line-height: 1.6;
 }
 
+.dialog-content .dialog-buttons-group {
+	display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+}
+
 .dialog-content .dialog-button {
 	appearance: none;
 	border: none;
-	background: var(--primary);
-	color: #fff;
 	padding: 0.85rem 1.25rem;
 	border-radius: 999px;
 	font-weight: 700;
@@ -23,6 +28,19 @@
 	transition: background 0.2s ease;
 }
 
+.dialog-content .dialog-button {
+    border: 1px solid var(--secondary-500);
+    color: var(--secondary-600);
+}
 .dialog-content .dialog-button:hover {
+	background: var(--secondary-300);
+}
+
+.dialog-content .dialog-button.dialog-button-primary {
+	background: var(--primary);
+	color: #fff;
+}
+
+.dialog-content .dialog-button.dialog-button-primary:hover {
 	background: var(--primary-hover);
 }

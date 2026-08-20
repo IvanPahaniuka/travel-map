@@ -1,7 +1,7 @@
-dialog.spotify-auth-dialog .dialog-button {
+dialog.spotify-auth-dialog .dialog-button.spotify-auth-dialog-button-authorize {
   background-color: #1db954;
 }
 
-dialog.spotify-auth-dialog .dialog-button:hover {
+dialog.spotify-auth-dialog .dialog-button.spotify-auth-dialog-button-authorize:hover {
 	background: #14883c;
 }

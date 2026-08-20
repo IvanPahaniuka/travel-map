@@ -8,6 +8,9 @@ import showWithContentOnly from "./dialog-content-only.js";
 /**
  * @typedef DialogButtonParams
  * @type {object}
+ * @property {string | undefined} className
+ * @property {'primary' | 'secondary' | undefined} type
+ * @property {boolean | undefined} autofocus
  * @property {string | undefined} content
  * @property {((close: (result: any) => void) => void) | undefined} onClick
  */
@@ -35,7 +38,7 @@ function show(params) {
 		createTitleElement(params.title),
 		createMessageElement(params.message),
 		params.content,
-		createButtonsElement(params.buttons),
+		createButtonsGroupElement(params.buttons),
 	].filter(e => e);
 
 	let contentElement;
@@ -77,7 +80,7 @@ function show(params) {
 			return null;
 		}
 	}
-	function createButtonsElement(/** @type {DialogButtonParams[] | undefined} */ buttons) {
+	function createButtonsGroupElement(/** @type {DialogButtonParams[] | undefined} */ buttons) {
 		buttons = Array.isArray(buttons)
 			? buttons.filter(b => typeof b === 'object')
 			: [];
@@ -85,19 +88,41 @@ function show(params) {
 		if (buttons.length > 0) {
 			const groupElement = document.createElement('div');
 			groupElement.className = 'dialog-buttons-group';
+
+			const autofocusButtonParams = 
+				buttons.find(b => b.autofocus === true)
+				|| buttons.find(b => b.type === 'primary' && b.autofocus !== false)
+				|| buttons.find(b => b.autofocus !== false);
+			
 			buttons.forEach(b => {
-				const buttonElement = document.createElement('button');
-				buttonElement.className = 'dialog-button';
-				buttonElement.textContent = b.content;
-				if (typeof b.onClick === 'function') {
-					buttonElement.onclick = () => b.onClick(close);
-				}
+				const buttonElement = createButtonElement({ ...b, autofocus: autofocusButtonParams === b });
 				groupElement.appendChild(buttonElement);
 			});
 			return groupElement;
 		} else {
 			return null;
 		}
+	}
+	function createButtonElement(/** @type {DialogButtonParams} */ params) {
+		const buttonElement = document.createElement('button');
+
+		const typeClassName = ({
+			'primary': 'dialog-button-primary',
+			'secondary': 'dialog-button-secondary',
+		})[params.type];
+
+		buttonElement.className = ['dialog-button', typeClassName, params.className].filter(cn => typeof cn === 'string' && cn.length > 0).join(' ');
+		buttonElement.textContent = params.content;
+
+		if (params.autofocus === true) {
+			buttonElement.autofocus = true;
+		}
+		
+		if (typeof params.onClick === 'function') {
+			buttonElement.onclick = () => params.onClick(close);
+		}
+
+		return buttonElement;
 	}
 }
 
