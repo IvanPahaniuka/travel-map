@@ -14,15 +14,15 @@
 
 	/* Primary colors palette */
 
-	--primary-100: #d8f3dc;
-	--primary-200: #b7e4c7;
-	--primary-300: #95d5b2;
-	--primary-400: #74c69d;
-	--primary-500: #52b788;
-	--primary-600: #40916c;
-	--primary-700: #2d6a4f;
-	--primary-800: #1b4332;
-	--primary-900: #081c15;
+	--primary-100: #cce5ff;
+	--primary-200: #99ccff;
+	--primary-300: #66b2ff;
+	--primary-400: #3299ff;
+	--primary-500: #007fff;
+	--primary-600: #0066cc;
+	--primary-700: #004c99;
+	--primary-800: #003366;
+	--primary-900: #001933;
 
 	--primary: var(--primary-500);
 	--primary-hover: var(--primary-700);
