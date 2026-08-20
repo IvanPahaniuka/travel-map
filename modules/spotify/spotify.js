@@ -1,5 +1,11 @@
 import SpotifyAuth from './spotify-auth.js';
 
+/**
+ * @typedef SpotifyInitResult
+ * @type {object}
+ * @property {boolean} isAuthenticated
+ */
+
 let player = null;
 let deviceId = null;
 
@@ -39,14 +45,14 @@ async function ensureSpotifyPlayerReady() {
       throw new Error('Spotify Web Playback SDK is not available.');
     }
 
-    const accessToken = await SpotifyAuth.getAccessToken(false);
+    const accessToken = await SpotifyAuth.getAccessToken();
     if (!accessToken) {
       throw new Error('Spotify access token is missing. Unable to initialize Spotify player');
     }
 
     const spotifyPlayer = new window.Spotify.Player({
       name: 'TravelMap Spotify Player',
-      getOAuthToken: (cb) => SpotifyAuth.getAccessToken(false).then(at => cb(at)),
+      getOAuthToken: (cb) => SpotifyAuth.getAccessToken().then(at => cb(at)),
       volume: 1,
     });
 
@@ -136,7 +142,7 @@ async function getTrack(trackUri) {
     return trackByTrackUriCache[trackUri];
   }
 
-  const accessToken = await SpotifyAuth.getAccessToken(false);
+  const accessToken = await SpotifyAuth.getAccessToken();
   if (!accessToken) {
     throw 'Spotify access token is missing, cannot fetch track.';
   }
@@ -169,7 +175,7 @@ async function getTrack(trackUri) {
 }
 
 async function play(trackUri, position = 0) {
-  const accessToken = await SpotifyAuth.getAccessToken(false);
+  const accessToken = await SpotifyAuth.getAccessToken();
   if (!accessToken) {
     throw 'Spotify access token is missing, cannot play track.';
   }
@@ -193,7 +199,14 @@ async function play(trackUri, position = 0) {
 }
 
 async function init() {
-  await SpotifyAuth.init();
+  const isAuthenticated = await SpotifyAuth.init();
+
+  /** @type {SpotifyInitResult} */
+  const result = {
+    isAuthenticated,
+  };
+
+  return result;
 }
 
 const Spotify = {

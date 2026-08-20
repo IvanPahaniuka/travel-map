@@ -2,11 +2,9 @@ import Translations from '../translations.js';
 import Spotify from '../spotify/spotify.js';
 import PlayerWidget from "../player/player-widget.js";
 import Markers from '../markers/markers.js';
+import SpotifyAuthDialog from '../spotify/spotify-auth-dialog.js';
 
-// TODO add image to player
 // TODO add settings button
-// TODO add seek and resume track after focusing on previous place where track was paused (save all places last tracks with pasue position and time) (like a radio)
-// TODO add multiple music formats support (spotify or files) and array of songs
 // TODO implement loading data and files from files cloud (e.g. Google Drive) + with access token as parameter
 // TODO implement dialog window that asks to provide url to data.json if it wasn't provided as parameter to index.html (e.g. ?data_url=https://example.com/data.json) 
 // TODO implement parameters support in data.json (e.g. access_token)
@@ -14,6 +12,8 @@ import Markers from '../markers/markers.js';
 // TODO implement video preview (maybe extend gallery items with objects support e.g. { "url": "....", "preview": "....." })
 // TODO add hero-card
 // TODO add ./ support to data.json and gallery items urls. It should be relative to the data.json file location, not the index.html file location.
+// TODO add more music source support / more playbacks (files, apple music, youtube music etc)
+// TODO add image to player
 
 function escapeHtml(value) {
 	return String(value)
@@ -60,7 +60,11 @@ async function init() {
 
 	Translations.addPlaces(places);
 
-	await Spotify.init();
+	const spotifyResult = await Spotify.init();
+	if (!spotifyResult.isAuthenticated) {
+		SpotifyAuthDialog.show();
+	}
+
 	await PlayerWidget.init();
 	await Markers.init(map, places);
 }

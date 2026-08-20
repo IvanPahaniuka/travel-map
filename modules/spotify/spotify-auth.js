@@ -1,6 +1,3 @@
-import Dialog from '../dialog/dialog.js';
-import Translations from '../translations.js';
-import Utils from '../utils.js';
 import SpotifyAuthStorage from './spotify-auth-storage.js';
 
 const SPOTIFY_CLIENT_ID = '53f4f99e88604240ba44e392508ac865';
@@ -13,9 +10,6 @@ const SPOTIFY_SCOPES = [
 	'user-read-private',
 	'user-modify-playback-state',
 ];
-const AUTHORIZATION_ENDPOINT = 'https://accounts.spotify.com/authorize';
-const TOKEN_ENDPOINT = 'https://accounts.spotify.com/api/token';
-
 
 function clearSpotifyQuery() {
 	const cleanUrl = `${window.location.pathname}${window.location.hash}`;
@@ -41,7 +35,13 @@ function generateRandomString(length) {
 	return values.reduce((acc, x) => acc + possible[x % possible.length], '');
 }
 
-async function startSpotifyAuthorization() {
+async function generateCodeChallenge(codeVerifier) {
+	const hashed = await sha256(codeVerifier);
+	const codeChallenge = base64encode(hashed);
+	return codeChallenge;
+}
+
+async function authorize() {
 	if (!SPOTIFY_CLIENT_ID || SPOTIFY_CLIENT_ID === 'YOUR_SPOTIFY_CLIENT_ID') {
 		console.warn('Spotify Client ID is not configured. Replace YOUR_SPOTIFY_CLIENT_ID in spotify.js.');
 	}
@@ -53,7 +53,7 @@ async function startSpotifyAuthorization() {
 	SpotifyAuthStorage.setAuthState(state);
 	SpotifyAuthStorage.setAuthCodeVerifier(codeVerifier);
 
-	const authUrl = new URL(AUTHORIZATION_ENDPOINT);
+	const authUrl = new URL('https://accounts.spotify.com/authorize');
 	authUrl.searchParams.set('response_type', 'code');
 	authUrl.searchParams.set('client_id', SPOTIFY_CLIENT_ID);
 	authUrl.searchParams.set('scope', SPOTIFY_SCOPES.join(' '));
@@ -63,30 +63,6 @@ async function startSpotifyAuthorization() {
 	authUrl.searchParams.set('redirect_uri', REDIRECT_URI);
 
 	window.location.assign(authUrl.toString());
-}
-
-const openLoginDialog = Utils.createSingleExecutor('spotify-auth-open-login-dialog', async () => {
-	const showResult = Dialog.show({
-		className: 'spotify-login-dialog',
-		title: Translations.get('spotify-dialog-title'),
-		message: Translations.get('spotify-dialog-message'),
-		buttons: [
-			{
-				content: Translations.get('spotify-dialog-button'),
-				onClick: () => {
-					startSpotifyAuthorization();
-				},
-			}
-		],
-	});
-
-	return showResult.promise;
-}, true);
-
-async function generateCodeChallenge(codeVerifier) {
-	const hashed = await sha256(codeVerifier);
-	const codeChallenge = base64encode(hashed);
-	return codeChallenge;
 }
 
 async function exchangeCodeForToken(code) {
@@ -103,7 +79,7 @@ async function exchangeCodeForToken(code) {
 		redirect_uri: REDIRECT_URI,
 	});
 
-	const response = await fetch(TOKEN_ENDPOINT, {
+	const response = await fetch('https://accounts.spotify.com/api/token', {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/x-www-form-urlencoded',
@@ -148,7 +124,7 @@ async function refreshSpotifyAccessToken() {
 		redirect_uri: REDIRECT_URI,
 	});
 
-	const response = await fetch(TOKEN_ENDPOINT, {
+	const response = await fetch('https://accounts.spotify.com/api/token', {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/x-www-form-urlencoded',
@@ -200,7 +176,7 @@ function parseAuthorizationResponse() {
 	};
 }
 
-async function getAccessToken(openLoginDialogIfFailed = false) {
+async function getAccessToken() {
 	const maxStaleTimeOnError = 5 * 24 * 60 * 60 * 1000;
 	const accessTokenRefreshInterval = 5 * 60 * 1000;
 
@@ -220,10 +196,6 @@ async function getAccessToken(openLoginDialogIfFailed = false) {
 				return accessToken;
 			}
 
-			if (openLoginDialogIfFailed === true) {
-				openLoginDialog();
-			}
-
 			return undefined;
 		}
 	}
@@ -241,7 +213,6 @@ async function init() {
 			SpotifyAuthStorage.clearAuthState();
 			SpotifyAuthStorage.clearAuthCodeVerifier();
 			clearSpotifyQuery();
-			openLoginDialog();
 			return false;
 		}
 
@@ -253,12 +224,11 @@ async function init() {
 			SpotifyAuthStorage.clearAuthState();
 			SpotifyAuthStorage.clearAuthCodeVerifier();
 			clearSpotifyQuery();
-			openLoginDialog();
 			return false;
 		}
 	}
 
-	const accessToken = await getAccessToken(true);
+	const accessToken = await getAccessToken();
 	if (!accessToken) {
 		return false;
 	}
@@ -268,6 +238,7 @@ async function init() {
 
 const SpotifyAuth = {
 	init,
+	authorize,
 	getAccessToken,
 };
 
