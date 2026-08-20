@@ -60,7 +60,7 @@
   aspect-ratio: 1 / 1;
   border: none;
   border-radius: 999px;
-  background: var(--accent, #adadad);
+  background: var(--primary, #adadad);
   color: #fff;
   font-size: 1rem;
   cursor: pointer;
@@ -72,7 +72,7 @@
 
 .player-widget-button:hover {
   transform: scale(1.05);
-  background: var(--accent-strong, #7c7c7c);
+  background: var(--primary-hover, #7c7c7c);
 }
 
 .player-widget-button:disabled {

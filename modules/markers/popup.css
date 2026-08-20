@@ -24,7 +24,7 @@
 	padding: 0.25rem 0.75rem;
 	border-radius: 999px;
 	background: rgba(197, 106, 70, 0.14);
-	color: var(--accent-strong);
+	color: var(--primary-hover);
 	font-size: 0.85rem;
 	line-height: 1.4;
 	font-weight: 600;

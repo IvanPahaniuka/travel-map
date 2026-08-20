@@ -14,7 +14,7 @@
 .dialog-content .dialog-button {
 	appearance: none;
 	border: none;
-	background: var(--accent);
+	background: var(--primary);
 	color: #fff;
 	padding: 0.85rem 1.25rem;
 	border-radius: 999px;
@@ -24,5 +24,5 @@
 }
 
 .dialog-content .dialog-button:hover {
-	background: var(--accent-strong);
+	background: var(--primary-hover);
 }
