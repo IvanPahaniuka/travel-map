@@ -8,6 +8,7 @@ const show = Utils.createSingleExecutor('spotify-auth-dialog', async () => {
 		className: 'spotify-auth-dialog',
 		title: Translations.get('spotify-auth-dialog-title'),
 		message: Translations.get('spotify-auth-dialog-message'),
+		showCloseButton: false,
 		buttons: [
 			{
                 className: 'spotify-auth-dialog-button-authorize',

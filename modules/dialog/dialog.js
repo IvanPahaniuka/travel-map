@@ -22,6 +22,7 @@ import showWithContentOnly from "./dialog-content-only.js";
  * @property {string | undefined} title
  * @property {string | undefined} message 
  * @property {DialogButtonParams[] | undefined} buttons 
+ * @property {boolean | undefined} showCloseButton
  * @property {HTMLElement | undefined} content
  */
 
@@ -53,6 +54,7 @@ function show(params) {
 
 	const result = showWithContentOnly({
 		className: params.className,
+		showCloseButton: params.showCloseButton,
 		content: contentElement,
 	});
 

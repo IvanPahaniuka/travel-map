@@ -2,6 +2,7 @@
  * @typedef DialogContentOnlyParams
  * @type {object}
  * @property {string | undefined} className
+ * @property {boolean | undefined} showCloseButton
  * @property {HTMLElement | undefined} content 
  */
 
@@ -13,12 +14,13 @@
  * @property {HTMLDialogElement} element
  */
 
+const CLOSE_ICON = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M6 6L18 18M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>`;
+
 /**
  * @function
  * @param {DialogContentOnlyParams} params 
  * @returns {DialogShowResult}
  */
-
 function show(params) {
   const removeElementTimeout = 5 * 1000;
 
@@ -27,6 +29,10 @@ function show(params) {
   dialogElement.closedBy = 'any';
   if (params.content) {
     dialogElement.appendChild(params.content);
+  }
+  if (params.showCloseButton !== false) {
+    const closeButtonElement = createCloseButtonElement();
+    dialogElement.appendChild(closeButtonElement);
   }
 
   document.body.appendChild(dialogElement);
@@ -56,6 +62,16 @@ function show(params) {
   dialogElement.showModal();
 
   return result;
+
+  function createCloseButtonElement() {
+    const closeButtonElement = document.createElement('button');
+    closeButtonElement.className = 'dialog-content-close-button';
+    closeButtonElement.setAttribute('aria-label', 'Close dialog');
+    closeButtonElement.innerHTML = CLOSE_ICON;
+    closeButtonElement.addEventListener('click', () => close());
+
+    return closeButtonElement;
+  }
 }
 
 const DialogContentOnly = {

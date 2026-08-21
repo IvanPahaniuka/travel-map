@@ -1,4 +1,5 @@
 dialog.dialog-content {
+	position: relative;
 	max-width: min(96vw, 420px);
 	width: 100%;
 	padding: 2rem;
@@ -8,6 +9,28 @@ dialog.dialog-content {
 	border: 1px solid rgba(0, 0, 0, 0.08);
 	text-align: center;
 	border-radius: 24px;
+}
+
+dialog.dialog-content .dialog-content-close-button {
+	appearance: none;
+	position: absolute;
+	top: 0.75rem;
+	right: 0.75rem;
+	display: grid;
+	place-items: center;
+	width: 2.5rem;
+	aspect-ratio: 1 / 1;
+	padding: 0.25rem;
+	border: none;
+	border-radius: 999px;
+	background: transparent;
+	color: #dbdbdb;
+	cursor: pointer;
+	transition: background 0.2s ease;
+}
+
+dialog.dialog-content .dialog-content-close-button:hover {
+	background: rgba(0, 0, 0, 0.08);
 }
 
 dialog.dialog-content::backdrop {
