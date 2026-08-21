@@ -1,4 +1,3 @@
-import Place from "../place/place.js";
 import Translations from "../translations.js";
 
 let glightboxInstance = null;
@@ -12,23 +11,22 @@ function escapeHtml(value) {
 		.replace(/'/g, '&#39;');
 }
 
-function buildGallery(place, titleId, maxThumbs = 4) {
+function buildGallery(place, maxThumbs = 4) {
 	if (!Array.isArray(place.gallery) || place.gallery.length === 0) return '';
-	const galleryId = Place.getGalleryClassName(place.id);
 	const visible = place.gallery.slice(0, maxThumbs);
 	const hidden = place.gallery.slice(maxThumbs);
 
 	const visibleHtml = visible
 		.map((url) => {
 			const href = escapeHtml(url);
-			return `<a href="${href}" class="glightbox" data-gallery="${galleryId}"><img src="${href}" alt="${escapeHtml(Translations.get(titleId) || '')}"></a>`;
+			return `<a href="${href}" class="glightbox" data-gallery="place-${place.id}-gallery"><img src="${href}" alt="img"></a>`;
 		})
 		.join('');
 
 	const hiddenHtml = hidden
 		.map((url) => {
 			const href = escapeHtml(url);
-			return `<a href="${href}" class="glightbox hidden" data-gallery="${galleryId}"></a>`;
+			return `<a href="${href}" class="glightbox hidden" data-gallery="place-${place.id}-gallery"></a>`;
 		})
 		.join('');
 
@@ -37,19 +35,18 @@ function buildGallery(place, titleId, maxThumbs = 4) {
 
 function buildContent(place) {
 
-	const titleId = Place.getTitleClassName(place.id);
 	const date = new Date(place.date);
 	const formattedDate = Number.isNaN(date.valueOf())
 		? ''
 		: new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric' }).format(date);
 
-	const galleryHtml = buildGallery(place, titleId);
+	const galleryHtml = buildGallery(place);
 
 	return `
     <div class="popup-card">
       <div class="popup-header">
+        <h2 class="popup-title">${Translations.get(`place-${place.id}-title`)}</h2>
         ${formattedDate ? `<span class="popup-date">${formattedDate}</span>` : ''}
-        <h2 class="${titleId}">${Translations.get(titleId)}</h2>
       </div>
       <div class="popup-body">
         ${galleryHtml}

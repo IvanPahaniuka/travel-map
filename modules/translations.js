@@ -1,5 +1,3 @@
-import Place from './place/place.js';
-
 const translations = {
 	'default': {
 		'spotify-auth-dialog-title': 'Spotify Playback',
@@ -49,7 +47,7 @@ function add(key, value, language = undefined) {
 function addPlaces(places = undefined) {
 
 	places?.forEach((place) => {
-		add(Place.getTitleClassName(place.id), place.title);
+		add(`place-${place.id}-title`, place.title);
 	});
 
 }
