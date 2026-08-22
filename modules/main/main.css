@@ -1,7 +1,8 @@
-@import '../dialog/dialog.css';
+@import '../ui/ui.css';
 @import '../markers/markers.css';
 @import '../spotify/spotify-auth-dialog.css';
 @import '../player/player-widget.css';
+@import '../settings/settings-button.css';
 
 :root {
 	--bg: #fff8f2;

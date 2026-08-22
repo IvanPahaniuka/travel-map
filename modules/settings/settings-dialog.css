@@ -1,0 +1,24 @@
+dialog .settings-dialog-content {
+    display: flex;
+    flex-direction: column;
+}
+
+dialog .settings-dialog-content .settings-spotify-group {
+    display: flex;
+    width: 100%;
+    gap: 2rem;
+    justify-content: space-between
+}
+
+dialog .settings-dialog-content .settings-spotify-group .settings-spotify-logo {
+    min-width: 70px;
+    max-width: 30%;
+}
+
+dialog .settings-dialog-content .button.settings-spotify-button {
+  background-color: #1db954;
+}
+
+dialog .settings-dialog-content .button.settings-spotify-button:hover {
+	background: #14883c;
+}

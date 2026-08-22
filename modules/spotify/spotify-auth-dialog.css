@@ -1,7 +1,13 @@
-dialog.spotify-auth-dialog .dialog-button.spotify-auth-dialog-button-authorize {
-  background-color: #1db954;
+dialog.spotify-auth-dialog .spotify-auth-dialog-logo {
+  min-width: 70px;
+  max-width: 50%;
+  align-self: center;
 }
 
-dialog.spotify-auth-dialog .dialog-button.spotify-auth-dialog-button-authorize:hover {
+dialog.spotify-auth-dialog .button.spotify-auth-dialog-button-authorize {
+  background-color: #1db954 ;
+}
+
+dialog.spotify-auth-dialog .button.spotify-auth-dialog-button-authorize:hover {
 	background: #14883c;
 }

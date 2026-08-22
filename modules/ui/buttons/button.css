@@ -1,0 +1,47 @@
+.button {
+	appearance: none;
+	border: none;
+	padding: 0.85rem 1.25rem;
+	border-radius: 999px;
+	font-weight: 700;
+	cursor: pointer;
+	transition: background 0.2s ease;
+}
+
+/* Primary buttons */
+
+.button-primary.button-contained {
+	background: var(--primary);
+	color: #fff;
+}
+.button-primary.button-contained:hover {
+	background: var(--primary-hover);
+}
+
+.button-primary.button-outlined {
+    border: 1px solid var(--primary-500);
+    color: var(--primary-600);
+	background: transparent;
+}
+.button-primary.button-outlined:hover {
+	background: var(--primary-300);
+}
+
+/* Secondary buttons */
+
+.button-secondary.button-contained {
+	background: var(--secondary);
+	color: #fff;
+}
+.button-secondary.button-contained:hover {
+	background: var(--secondary-hover);
+}
+
+.button-secondary.button-outlined {
+    border: 1px solid var(--secondary-500);
+    color: var(--secondary-600);
+	background: transparent;
+}
+.button-secondary.button-outlined:hover {
+	background: var(--secondary-300);
+}

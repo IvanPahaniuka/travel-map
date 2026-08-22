@@ -4,7 +4,9 @@ const SpotifyAuthStorage = {
         const accessToken = localStorage.getItem('spotify_access_token') || '';
         const updatedAtStr = localStorage.getItem('spotify_access_token_updated_at');
         const updatedAt = updatedAtStr ? Number(updatedAtStr) : 0;
-        return [accessToken, updatedAt];
+        /** @type {[string, number]} */
+        const result = [accessToken, updatedAt];
+        return result;
     },
     setAccessToken: (accessToken) => {
         localStorage.setItem('spotify_access_token', accessToken);

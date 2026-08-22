@@ -3,8 +3,8 @@ import Spotify from '../spotify/spotify.js';
 import PlayerWidget from "../player/player-widget.js";
 import Markers from '../markers/markers.js';
 import SpotifyAuthDialog from '../spotify/spotify-auth-dialog.js';
+import SettingsButton from '../settings/settings-button.js';
 
-// TODO add settings button
 // TODO implement loading data and files from files cloud (e.g. Google Drive) + with access token as parameter
 // TODO implement dialog window that asks to provide url to data.json if it wasn't provided as parameter to index.html (e.g. ?data_url=https://example.com/data.json) 
 // TODO implement parameters support in data.json (e.g. access_token)
@@ -61,9 +61,11 @@ async function init() {
 	Translations.addPlaces(places);
 
 	const spotifyResult = await Spotify.init();
-	if (!spotifyResult.isAuthenticated) {
+	if (!spotifyResult.isAuthorized) {
 		SpotifyAuthDialog.show();
 	}
+
+	document.body.appendChild(SettingsButton.init());
 
 	await PlayerWidget.init();
 	await Markers.init(map, places);

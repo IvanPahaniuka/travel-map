@@ -41,6 +41,14 @@ async function generateCodeChallenge(codeVerifier) {
 	return codeChallenge;
 }
 
+async function logout() {
+	SpotifyAuthStorage.clearAccessToken();
+	SpotifyAuthStorage.clearRefreshToken();
+	SpotifyAuthStorage.clearAuthState();
+	SpotifyAuthStorage.clearAuthCodeVerifier();
+	clearSpotifyQuery();
+} 
+
 async function authorize() {
 	if (!SPOTIFY_CLIENT_ID || SPOTIFY_CLIENT_ID === 'YOUR_SPOTIFY_CLIENT_ID') {
 		console.warn('Spotify Client ID is not configured. Replace YOUR_SPOTIFY_CLIENT_ID in spotify.js.');
@@ -239,6 +247,7 @@ async function init() {
 const SpotifyAuth = {
 	init,
 	authorize,
+	logout,
 	getAccessToken,
 };
 
