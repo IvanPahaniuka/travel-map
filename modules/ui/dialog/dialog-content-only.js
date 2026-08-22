@@ -76,6 +76,6 @@ function show(params) {
 
 const DialogContentOnly = {
   show,
-}
+};
 
-export default show;
+export default DialogContentOnly;

@@ -1,4 +1,5 @@
-import showWithContentOnly from "./dialog-content-only.js";
+import DialogContentOnly from "./dialog-content-only.js";
+import Button from "../buttons/button.js";
 
 /**
  * @typedef DialogShowResult
@@ -6,18 +7,18 @@ import showWithContentOnly from "./dialog-content-only.js";
  */
 
 /**
- * @typedef DialogButtonParams
- * @type {object}
- * @property {string | undefined} className
- * @property {'primary' | 'secondary' | undefined} type
- * @property {boolean | undefined} autofocus
- * @property {string | undefined} content
- * @property {((close: (result: any) => void) => void) | undefined} onClick
+ * @typedef ButtonParams
+ * @type {import("../buttons/button.js").ButtonParams}
  */
 
 /**
- * @typedef DialogParams
- * @type {object}
+ * @typedef {object} DialogButtonParamsProperties
+ * @property {((close: (result: any) => void) => void) | undefined} onClick
+ * @typedef {Omit<ButtonParams, keyof DialogButtonParamsProperties> & DialogButtonParamsProperties} DialogButtonParams
+ */
+
+/**
+ * @typedef {object} DialogParams
  * @property {string | undefined} className
  * @property {string | undefined} title
  * @property {string | undefined} message 
@@ -52,7 +53,7 @@ function show(params) {
 		contentElement = contentGroupElement;
 	}
 
-	const result = showWithContentOnly({
+	const result = DialogContentOnly.show({
 		className: params.className,
 		showCloseButton: params.showCloseButton,
 		content: contentElement,
@@ -106,25 +107,11 @@ function show(params) {
 		}
 	}
 	function createButtonElement(/** @type {DialogButtonParams} */ params) {
-		const buttonElement = document.createElement('button');
-
-		const typeClassName = ({
-			'primary': 'dialog-button-primary',
-			'secondary': 'dialog-button-secondary',
-		})[params.type];
-
-		buttonElement.className = ['dialog-button', typeClassName, params.className].filter(cn => typeof cn === 'string' && cn.length > 0).join(' ');
-		buttonElement.textContent = params.content;
-
-		if (params.autofocus === true) {
-			buttonElement.autofocus = true;
-		}
-		
-		if (typeof params.onClick === 'function') {
-			buttonElement.onclick = () => params.onClick(close);
-		}
-
-		return buttonElement;
+		const onClick = params.onClick;
+		return Button.createElement({ 
+			...params, 
+			onClick: typeof onClick === 'function' ? () => onClick(close) : undefined,
+		});
 	}
 }
 

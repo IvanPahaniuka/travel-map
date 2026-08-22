@@ -1,10 +1,10 @@
-import Dialog from '../dialog/dialog.js';
 import Translations from '../translations.js';
+import UI from '../ui/ui.js';
 import Utils from '../utils.js';
-import SpotifyAuth from './spotify-auth.js';
+import Spotify from './spotify.js';
 
 const show = Utils.createSingleExecutor('spotify-auth-dialog', async () => {
-	const showResult = Dialog.show({
+	const showResult = UI.Dialog.show({
 		className: 'spotify-auth-dialog',
 		title: Translations.get('spotify-auth-dialog-title'),
 		message: Translations.get('spotify-auth-dialog-message'),
@@ -12,19 +12,17 @@ const show = Utils.createSingleExecutor('spotify-auth-dialog', async () => {
 		buttons: [
 			{
                 className: 'spotify-auth-dialog-button-authorize',
-                type: 'primary',
-				content: Translations.get('spotify-auth-dialog-button-authorize'),
-				onClick: () => {
-					SpotifyAuth.authorize();
-				},
+                color: 'primary',
+				variant: 'contained',
+				text: Translations.get('spotify-auth-dialog-button-authorize'),
+				onClick: () => { Spotify.authorize(); },
 			},
 			{
-                type: 'secondary',
-				content: Translations.get('spotify-auth-dialog-button-close'),
-				onClick: () => {
-					showResult.close();
-				},
-			}
+                color: 'secondary',
+				variant: 'outlined',
+				text: Translations.get('spotify-auth-dialog-button-close'),
+				onClick: (close) => { close(); },
+			},
 		],
 	});
 

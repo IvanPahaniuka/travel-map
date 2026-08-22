@@ -1,0 +1,20 @@
+@import './dialog-content-only.css';
+@import '../buttons/button.css';
+
+.dialog-content h2 {
+	margin: 0 0 0.75rem;
+	font-size: 1.5rem;
+}
+
+.dialog-content p {
+	margin: 0 0 1rem;
+	color: #4d4d4d;
+	line-height: 1.6;
+}
+
+.dialog-content .dialog-buttons-group {
+	display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+}

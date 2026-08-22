@@ -5,6 +5,10 @@ const translations = {
 		'spotify-auth-dialog-button-authorize': 'Login to Spotify',
 		'spotify-auth-dialog-button-close': 'Skip for now',
 
+		'settings-dialog-title': 'Settings',
+		'settings-spotify-button-authorize': 'Login to Spotify',
+		'settings-spotify-button-logout': 'Sign out from Spotify',
+
 		'player-widget-track-name-empty': 'No active playback',
 		'player-widget-track-name-unknown': 'Unknown track',
 	},
@@ -13,6 +17,10 @@ const translations = {
 		'spotify-auth-dialog-message': 'Войдите в Spotify, чтобы включить воспроизведение музыки',
 		'spotify-auth-dialog-button-authorize': 'Войти в Spotify',
 		'spotify-auth-dialog-button-close': 'Пропустить',
+
+		'settings-dialog-title': 'Настройки',
+		'settings-spotify-button-authorize': 'Войти в Spotify',
+		'settings-spotify-button-logout': 'Выйти из Spotify',
 
 		'player-widget-track-name-empty': 'Нет активного трека',
 		'player-widget-track-name-unknown': 'Неизвестный трек',

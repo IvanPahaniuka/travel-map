@@ -3,7 +3,7 @@ import SpotifyAuth from './spotify-auth.js';
 /**
  * @typedef SpotifyInitResult
  * @type {object}
- * @property {boolean} isAuthenticated
+ * @property {boolean} isAuthorized
  */
 
 let player = null;
@@ -198,12 +198,17 @@ async function play(trackUri, position = 0) {
   console.info(`Playing Spotify track: ${trackUri}`);
 }
 
+async function isAuthorized() {
+  const accessToken = await SpotifyAuth.getAccessToken();
+  return typeof accessToken === 'string' && accessToken !== '';
+}
+
 async function init() {
-  const isAuthenticated = await SpotifyAuth.init();
+  const isAuthorized = await SpotifyAuth.init();
 
   /** @type {SpotifyInitResult} */
   const result = {
-    isAuthenticated,
+    isAuthorized,
   };
 
   return result;
@@ -211,6 +216,9 @@ async function init() {
 
 const Spotify = {
   init,
+  isAuthorized,
+  authorize: SpotifyAuth.authorize,
+  logout: SpotifyAuth.logout,
   play,
   pause,
   resume,
