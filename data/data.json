@@ -14,10 +14,10 @@
 				"spotify:track:3BovdzfaX4jb5KFQwoPfAw"
 			],
 			"gallery": [
-				"./data/athens-2023/photo_2026-07-29_21-30-55.jpg",
-				"./data/athens-2023/photo_2026-07-30_23-18-26.jpg",
-				"./data/athens-2023/photo_2026-07-30_23-19-58.jpg",
-				"./data/athens-2023/photo_2026-08-03_18-57-00.jpg"
+				"./athens-2023/photo_2026-07-29_21-30-55.jpg",
+				"./athens-2023/photo_2026-07-30_23-18-26.jpg",
+				"./athens-2023/photo_2026-07-30_23-19-58.jpg",
+				"./athens-2023/photo_2026-08-03_18-57-00.jpg"
 			]
 		},
 		{
@@ -34,11 +34,11 @@
 				"spotify:track:1NHWG8zxSEypSRF3UufrnO"
 			],
 			"gallery": [
-				"./data/batumi-2026/photo_2026-07-28_22-57-52.jpg",
-				"./data/batumi-2026/photo_2026-07-28_22-58-51.jpg",
-				"./data/batumi-2026/photo_2026-07-28_22-59-35.jpg",
-				"./data/batumi-2026/photo_2026-07-28_23-04-39.jpg",
-				"./data/batumi-2026/photo_2026-07-29_23-27-02.jpg"
+				"./batumi-2026/photo_2026-07-28_22-57-52.jpg",
+				"./batumi-2026/photo_2026-07-28_22-58-51.jpg",
+				"./batumi-2026/photo_2026-07-28_22-59-35.jpg",
+				"./batumi-2026/photo_2026-07-28_23-04-39.jpg",
+				"./batumi-2026/photo_2026-07-29_23-27-02.jpg"
 			]
 		}
 	]

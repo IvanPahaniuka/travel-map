@@ -25,16 +25,48 @@ async function loadData() {
 		}
 
 		const data = await response.json();
+
+		replaceCurrentDirectory(data, dataUrl);
+
 		return data;
 	} catch (error) {
 		console.error(error);
 		return undefined;
 	}
+
+	function replaceCurrentDirectory(data, dataUrl) {
+		if (!Array.isArray(data?.places)) {
+			return;
+		}
+
+		const currentDirectory = getCurrentDirectory(dataUrl);
+		data.places.forEach(place => {
+			if (!Array.isArray(place?.gallery)) {
+				return;
+			}
+
+			place.gallery = place.gallery.map(image => 
+				typeof image === 'string' && (image.startsWith('./') || image.startsWith('.\\'))
+				? (currentDirectory + image.substring(2))
+				: image
+			);
+		});
+	}
+	function getCurrentDirectory(/** @type {string} */ dataUrl) {
+		const lastSlashIndex = Math.max(dataUrl.lastIndexOf('/'), dataUrl.lastIndexOf('\\'));
+		if (lastSlashIndex === -1) {
+			return '';
+		}
+
+		const result = dataUrl.substring(0, lastSlashIndex + 1);
+		return result;
+	}
 }
 
 async function loadPlaces() {
 	const data = await loadData();
-	return data?.places || [];
+	const places =  data?.places || [];
+	return places;
 }
 
 async function init() {
