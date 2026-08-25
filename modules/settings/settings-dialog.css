@@ -1,13 +1,37 @@
 dialog .settings-dialog-content {
     display: flex;
     flex-direction: column;
+    gap: 1.25rem;
+}
+
+dialog .settings-dialog-content .settings-data-url-group {
+    display: flex;
+    width: 100%;
+    gap: 1.25rem;
+    justify-content: space-between;
+    align-items: center;
+}
+
+dialog .settings-dialog-content .settings-data-url-label {
+    font-size: 1rem;
+}
+
+dialog .settings-dialog-content .settings-data-url-input {
+    min-width: 0;
+    flex: 1;
+    text-align: right;
+    border: 1px solid #dbdbdb;
+    padding: 0.5rem 0.5rem;
+    font-size: 1rem;
+    border-radius: 999px;
 }
 
 dialog .settings-dialog-content .settings-spotify-group {
     display: flex;
     width: 100%;
     gap: 2rem;
-    justify-content: space-between
+    justify-content: space-between;
+    align-items: center;
 }
 
 dialog .settings-dialog-content .settings-spotify-group .settings-spotify-logo {

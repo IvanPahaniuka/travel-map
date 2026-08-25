@@ -4,6 +4,7 @@ import PlayerWidget from "../player/player-widget.js";
 import Markers from '../markers/markers.js';
 import SpotifyAuthDialog from '../spotify/spotify-auth-dialog.js';
 import SettingsButton from '../settings/settings-button.js';
+import SettingsStorage from '../settings/settings-storage.js';
 
 // TODO implement loading data and files from files cloud (e.g. Google Drive) + with access token as parameter
 // TODO implement dialog window that asks to provide url to data.json if it wasn't provided as parameter to index.html (e.g. ?data_url=https://example.com/data.json) 
@@ -13,20 +14,12 @@ import SettingsButton from '../settings/settings-button.js';
 // TODO add hero-card
 // TODO add ./ support to data.json and gallery items urls. It should be relative to the data.json file location, not the index.html file location.
 // TODO add more music source support / more playbacks (files, apple music, youtube music etc)
-// TODO add image to player
-
-function escapeHtml(value) {
-	return String(value)
-		.replace(/&/g, '&amp;')
-		.replace(/</g, '&lt;')
-		.replace(/>/g, '&gt;')
-		.replace(/"/g, '&quot;')
-		.replace(/'/g, '&#39;');
-}
+// TODO add playback logo, colors and service link to track to player as it may be required by some services (e.g. spotify)
 
 async function loadData() {
 	try {
-		const response = await fetch('./data/data.json');
+		const dataUrl = SettingsStorage.getDataUrl() || './data/data.json';
+		const response = await fetch(dataUrl);
 		if (!response.ok) {
 			throw new Error(`Unable to load data.json (${response.status})`);
 		}
