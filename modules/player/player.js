@@ -320,7 +320,7 @@ async function changePlaylist(/** @type {string} */ id) {
 		const trackDurationOld = trackState?.duration;
 		
 		const trackPosition = [trackPositionOld, trackUpdatedAtOld, trackDurationOld].every(v => typeof v === 'number')
-			? ((trackPositionOld + Date.now() - trackUpdatedAtOld) % trackDurationOld % trackDuration)
+			? ((Math.min(trackPositionOld, trackDurationOld) + Date.now() - trackUpdatedAtOld) % trackDurationOld % trackDuration)
 			: getRandomInt(0, trackDuration);
 
 		playlist.currentTrackState = {

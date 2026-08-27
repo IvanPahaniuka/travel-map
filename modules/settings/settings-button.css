@@ -6,7 +6,7 @@
 	left: 1rem;
 	align-items: center;
 	background: #ffffff;
-	border: 1px solid var(--secondary-500);
+	border: none;
 	border-radius: 999px;
 	box-shadow: var(--shadow);
 	color: var(--secondary-700);

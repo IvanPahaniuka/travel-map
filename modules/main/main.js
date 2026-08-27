@@ -6,15 +6,13 @@ import SpotifyAuthDialog from '../spotify/spotify-auth-dialog.js';
 import SettingsButton from '../settings/settings-button.js';
 import SettingsStorage from '../settings/settings-storage.js';
 
-// TODO implement loading data and files from files cloud (e.g. Google Drive) + with access token as parameter
-// TODO implement dialog window that asks to provide url to data.json if it wasn't provided as parameter to index.html (e.g. ?data_url=https://example.com/data.json) 
 // TODO implement parameters support in data.json (e.g. access_token)
 // TODO fix video playback
 // TODO implement video preview (maybe extend gallery items with objects support e.g. { "url": "....", "preview": "....." })
 // TODO add hero-card
-// TODO add ./ support to data.json and gallery items urls. It should be relative to the data.json file location, not the index.html file location.
 // TODO add more music source support / more playbacks (files, apple music, youtube music etc)
 // TODO add playback logo, colors and service link to track to player as it may be required by some services (e.g. spotify)
+// TODO implement EventBus util
 
 async function loadData() {
 	try {

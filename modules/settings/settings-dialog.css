@@ -4,7 +4,7 @@ dialog .settings-dialog-content {
     gap: 1.25rem;
 }
 
-dialog .settings-dialog-content .settings-data-url-group {
+dialog .settings-dialog-content .settings-input-group {
     display: flex;
     width: 100%;
     gap: 1.25rem;
@@ -12,18 +12,36 @@ dialog .settings-dialog-content .settings-data-url-group {
     align-items: center;
 }
 
-dialog .settings-dialog-content .settings-data-url-label {
+dialog .settings-dialog-content .settings-input-label {
     font-size: 1rem;
 }
 
-dialog .settings-dialog-content .settings-data-url-input {
+dialog .settings-dialog-content .settings-input {
     min-width: 0;
     flex: 1;
-    text-align: right;
+    text-align: center;
     border: 1px solid #dbdbdb;
     padding: 0.5rem 0.5rem;
     font-size: 1rem;
     border-radius: 999px;
+}
+
+dialog .settings-dialog-content .settings-input-group.settings-encryption-key-group {
+    gap: 0;
+}
+
+dialog .settings-dialog-content .settings-input-label.settings-encryption-key-label {
+    margin-right: 1.25rem;
+}
+
+dialog .settings-dialog-content .settings-input.settings-encryption-key-input {
+    margin-right: 0.5rem;
+}
+
+dialog .settings-dialog-content .settings-encryption-key-button {
+    height: 2rem;
+    aspect-ratio: 1 / 1;
+    padding: 0.25rem;
 }
 
 dialog .settings-dialog-content .settings-spotify-group {

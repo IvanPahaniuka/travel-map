@@ -10,12 +10,26 @@ function clearDataUrl() {
     localStorage.removeItem('data_url');
 }
 
+function getEncryptionKey() {
+    return localStorage.getItem('encryption_key');
+}
+function setEncryptionKey(/** @type {string | null} */ encryptionKey) {
+    localStorage.setItem('encryption_key', encryptionKey);
+}
+function clearEncryptionKey() {
+    localStorage.removeItem('encryption_key');
+}
+
 const SettingsStorage = {
     Spotify: SpotifyAuthStorage,
 
     getDataUrl,
     setDataUrl,
     clearDataUrl,
+
+    getEncryptionKey,
+    setEncryptionKey,
+    clearEncryptionKey,
 };
 
 export default SettingsStorage;

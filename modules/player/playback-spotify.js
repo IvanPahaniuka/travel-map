@@ -20,19 +20,16 @@ import Spotify from "../spotify/spotify.js";
  * @type {import("./playbacks.js").Playback}
  */
 
-/**
- * @typedef TrackState
- * @type {object}
- * @property {Track} track
- * @property {number} position
- * @property {number} updatedAt
+/** 
+ * @typedef PlaybackTrackState
+ * @type {import("./playbacks.js").PlaybackTrackState}
  */
 
 /**
  * @typedef InternalState
  * @type {object}
  * @property {number} volume
- * @property {TrackState | null} currentTrackState
+ * @property {PlaybackTrackState | null} currentTrackState
  */
 
 /** @type {InternalState} */
@@ -43,16 +40,6 @@ const _state = {
 
 const stateChangedListeners = [];
 let spotifyStateChangedListener = null;
-
-/**
- * Extract track ID from Spotify URI or URL
- */
-function extractTrackId(/** @type {Track} */ track) {
-	const match = String(track || '').match(
-		/(?:spotify:track:)?([A-Za-z0-9]+)(?:\?.*)?/
-	);
-	return match ? match[1] : null;
-}
 
 async function onSpotifyStateChanged(spotifyState) {
     const { 
@@ -71,7 +58,7 @@ async function onSpotifyStateChanged(spotifyState) {
     if (trackState && spotifyTrackUris.includes(track)) {
         if (paused === true && position === 0) {
 
-            trackState.position = spotifyTrackDetails.duration_ms;
+            trackState.position = Infinity;
             trackState.updatedAt = Date.now();
             notifyListencer('state_changed');
 

@@ -1,4 +1,6 @@
 import PlaybackSpotify from "./playback-spotify.js";
+import PlaybackEncryptedFile from "./playback-encrypted-file.js";
+import PlaybackFile from "./playback-file.js";
 
 /**
  * @typedef Track
@@ -49,6 +51,8 @@ import PlaybackSpotify from "./playback-spotify.js";
 /** @type {Playback[]} */
 const Playbacks = [
     PlaybackSpotify,
+    PlaybackEncryptedFile,
+    PlaybackFile,
 ];
 
 export default Playbacks;
