@@ -6,13 +6,16 @@ import SpotifyAuthDialog from '../spotify/spotify-auth-dialog.js';
 import SettingsButton from '../settings/settings-button.js';
 import SettingsStorage from '../settings/settings-storage.js';
 
-// TODO implement parameters support in data.json (e.g. access_token)
+// TODO migrate to TS/React/NPM stack
+// TODO add files patterns support for images (e.g. ./data/paris-2023/*.*)
+// TODO add files patterns support for tracks
 // TODO fix video playback
 // TODO implement video preview (maybe extend gallery items with objects support e.g. { "url": "....", "preview": "....." })
 // TODO add hero-card
-// TODO add more music source support / more playbacks (files, apple music, youtube music etc)
 // TODO add playback logo, colors and service link to track to player as it may be required by some services (e.g. spotify)
 // TODO implement EventBus util
+// TODO implement parameters support in data.json (e.g. access_token)
+// TODO add more playbacks (apple music, youtube music etc)
 
 async function loadData() {
 	try {

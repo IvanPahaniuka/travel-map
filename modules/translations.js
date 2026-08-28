@@ -12,6 +12,32 @@ const translations = {
 		'player-widget-track-name-empty': 'No active playback',
 		'player-widget-track-name-unknown': 'Unknown track',
 	},
+	'es': {
+		'spotify-auth-dialog-title': 'Reproducción de Spotify',
+		'spotify-auth-dialog-message': 'Inicia sesión en Spotify para activar la reproducción de música',
+		'spotify-auth-dialog-button-authorize': 'Iniciar sesión en Spotify',
+		'spotify-auth-dialog-button-close': 'Omitir por ahora',
+
+		'settings-dialog-title': 'Configuración',
+		'settings-spotify-button-authorize': 'Iniciar sesión',
+		'settings-spotify-button-logout': 'Cerrar sesión',
+
+		'player-widget-track-name-empty': 'No hay reproducción activa',
+		'player-widget-track-name-unknown': 'Pista desconocida',
+	},
+	'it': {
+		'spotify-auth-dialog-title': 'Riproduzione Spotify',
+		'spotify-auth-dialog-message': 'Accedi a Spotify per abilitare la riproduzione musicale',
+		'spotify-auth-dialog-button-authorize': 'Accedi a Spotify',
+		'spotify-auth-dialog-button-close': 'Salta per ora',
+
+		'settings-dialog-title': 'Impostazioni',
+		'settings-spotify-button-authorize': 'Accedi',
+		'settings-spotify-button-logout': 'Esci',
+
+		'player-widget-track-name-empty': 'Nessuna riproduzione attiva',
+		'player-widget-track-name-unknown': 'Brano sconosciuto',
+	},
 	'ru': {
 		'spotify-auth-dialog-title': 'Spotify Музыка',
 		'spotify-auth-dialog-message': 'Войдите в Spotify, чтобы включить воспроизведение музыки',
