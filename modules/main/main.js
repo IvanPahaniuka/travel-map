@@ -5,13 +5,17 @@ import Markers from '../markers/markers.js';
 import SpotifyAuthDialog from '../spotify/spotify-auth-dialog.js';
 import SettingsButton from '../settings/settings-button.js';
 import SettingsStorage from '../settings/settings-storage.js';
+import ShareButton from '../share/share-button.js';
 
-// TODO migrate to TS/React/NPM stack
-// TODO add files patterns support for images (e.g. ./data/paris-2023/*.*)
+// TODO Spotify playback. Return canPlay => false if Spotify is not authenticated
+// TODO change to place playlist after popup open
+// TODO add welcome-card
+// TODO add files patterns support for images (e.g. ./paris-2023/*.*)
 // TODO add files patterns support for tracks
-// TODO fix video playback
+// TODO add multiple data sources support (data switch)
 // TODO implement video preview (maybe extend gallery items with objects support e.g. { "url": "....", "preview": "....." })
-// TODO add hero-card
+// TODO migrate to TS/React/NPM stack
+// TODO move all icons (except spotify) to ui/icons
 // TODO add playback logo, colors and service link to track to player as it may be required by some services (e.g. spotify)
 // TODO implement EventBus util
 // TODO implement parameters support in data.json (e.g. access_token)
@@ -19,7 +23,7 @@ import SettingsStorage from '../settings/settings-storage.js';
 
 async function loadData() {
 	try {
-		const dataUrl = SettingsStorage.getDataUrl() || './data/data.json';
+		const dataUrl = SettingsStorage.getDataUrls()?.[0] || './data/data.json';
 		const response = await fetch(dataUrl);
 		if (!response.ok) {
 			throw new Error(`Unable to load data.json (${response.status})`);
@@ -70,7 +74,29 @@ async function loadPlaces() {
 	return places;
 }
 
+function applySharedSettingsFromQuery() {
+	const params = new URLSearchParams(window.location.search);
+
+	const dataUrls = params.getAll('data_urls');
+	if (dataUrls.length) {
+		SettingsStorage.setDataUrls(dataUrls);
+		params.delete('data_urls');
+	}
+
+	const encryptionKeys = params.getAll('encryption_keys');
+	if (encryptionKeys.length) {
+		SettingsStorage.setEncryptionKeys(encryptionKeys);
+		params.delete('encryption_keys');
+	}
+
+	const queryString = params.toString();
+	const url = new URL(window.location.href);
+	url.search = queryString;
+	window.history.replaceState({}, '', url);
+}
+
 async function init() {
+	applySharedSettingsFromQuery();
 
 	const map = L.map('map', {
 		zoomControl: false,
@@ -92,6 +118,7 @@ async function init() {
 	}
 
 	document.body.appendChild(SettingsButton.init());
+	document.body.appendChild(ShareButton.init());
 
 	await PlayerWidget.init();
 	await Markers.init(map, places);

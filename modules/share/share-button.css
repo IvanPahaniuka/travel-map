@@ -1,0 +1,24 @@
+.share-button {
+	position: absolute;
+	top: 1rem;
+	right: 1rem;
+	align-items: center;
+	background: #ffffff;
+	border: none;
+	border-radius: 999px;
+	box-shadow: var(--shadow);
+	color: var(--secondary-700);
+	cursor: pointer;
+	display: flex;
+	justify-content: center;
+	padding: 0.5rem;
+	z-index: 1000;
+	transition: background 0.2s ease, color 0.2s ease;
+	width: 3rem;
+	aspect-ratio: 1 / 1;
+}
+
+.share-button:hover,
+.share-button:focus-visible {
+	background: var(--secondary-300);
+}

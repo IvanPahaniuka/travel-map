@@ -3,6 +3,7 @@
 @import '../spotify/spotify-auth-dialog.css';
 @import '../player/player-widget.css';
 @import '../settings/settings-button.css';
+@import '../share/share-button.css';
 
 :root {
 	--bg: #fff8f2;

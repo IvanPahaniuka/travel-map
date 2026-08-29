@@ -6,7 +6,9 @@ import Utils from '../utils.js';
 import SettingsStorage from './settings-storage.js';
 
 const show = Utils.createSingleExecutor('settings-dialog', async () => {
-    const initialDataUrl = SettingsStorage.getDataUrl();
+    const initialDataUrl = SettingsStorage.getDataUrls()?.[0];
+    const initialEncryptionKey = SettingsStorage.getEncryptionKeys()?.[0];
+
     const contentElement = document.createElement('div');
     contentElement.className = 'settings-dialog-content';
 
@@ -26,7 +28,11 @@ const show = Utils.createSingleExecutor('settings-dialog', async () => {
 	});
 
     const result = await showResult.promise;
-    if (SettingsStorage.getDataUrl() !== initialDataUrl) {
+
+    if (SettingsStorage.getDataUrls()?.[0] !== initialDataUrl) {
+        window.location.reload();
+    }
+    if (SettingsStorage.getEncryptionKeys()?.[0] !== initialEncryptionKey) {
         window.location.reload();
     }
 
@@ -43,13 +49,13 @@ const show = Utils.createSingleExecutor('settings-dialog', async () => {
         const inputElement = document.createElement('input');
         inputElement.className = 'settings-input settings-data-url-input';
         inputElement.type = 'url';
-        inputElement.value = SettingsStorage.getDataUrl() || '';
+        inputElement.value = SettingsStorage.getDataUrls()?.[0] || '';
         inputElement.addEventListener('change', () => {
             const dataUrl = inputElement.value.trim();
             if (dataUrl) {
-                SettingsStorage.setDataUrl(dataUrl);
+                SettingsStorage.setDataUrls([dataUrl]);
             } else {
-                SettingsStorage.clearDataUrl();
+                SettingsStorage.clearDataUrls();
             }
         });
 
@@ -69,13 +75,13 @@ const show = Utils.createSingleExecutor('settings-dialog', async () => {
         const inputElement = document.createElement('input');
         inputElement.className = 'settings-input settings-encryption-key-input';
         inputElement.type = 'password';
-        inputElement.value = SettingsStorage.getEncryptionKey() || '';
+        inputElement.value = SettingsStorage.getEncryptionKeys()?.[0] || '';
         inputElement.addEventListener('change', () => {
             const encryptionKey = inputElement.value;
             if (encryptionKey) {
-                SettingsStorage.setEncryptionKey(encryptionKey);
+                SettingsStorage.setEncryptionKeys([encryptionKey]);
             } else {
-                SettingsStorage.clearEncryptionKey();
+                SettingsStorage.clearEncryptionKeys();
             }
         });
 
