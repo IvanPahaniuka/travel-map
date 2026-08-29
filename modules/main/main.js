@@ -148,7 +148,15 @@ async function init() {
 
 	const spotifyResult = await Spotify.init();
 	if (!spotifyResult.isAuthorized) {
-		SpotifyAuthDialog.show();
+		const hasSpotifyTracks = Array.isArray(places) 
+			&& places.some(p => 
+				Array.isArray(p.tracks) 
+				&& p.tracks.some(t => typeof t === 'string' && t.startsWith('spotify:'))
+			);
+
+		if (hasSpotifyTracks) {
+			SpotifyAuthDialog.show();
+		}
 	}
 
 	document.body.appendChild(SettingsButton.init());
