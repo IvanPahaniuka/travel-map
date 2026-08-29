@@ -144,8 +144,6 @@ async function init() {
 
 	Translations.addPlaces(places);
 
-	showWelcomeDialog(data?.welcome);
-
 	const spotifyResult = await Spotify.init();
 	if (!spotifyResult.isAuthorized) {
 		const hasSpotifyTracks = Array.isArray(places) 
@@ -164,6 +162,8 @@ async function init() {
 
 	await PlayerWidget.init();
 	await Markers.init(map, places);
+
+	showWelcomeDialog(data?.welcome);
 }
 
 init();
