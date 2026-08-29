@@ -13,7 +13,7 @@ function createMarkerIcon() {
 	});
 }
 
-async function updateCurrentPlaylist(map, places) {
+async function _updateCurrentPlaylist(map, places) {
 
 	const pauseTrackRadiusPixels = 500;
 	const playTrackRadiusPixels = 300;
@@ -56,15 +56,16 @@ async function updateCurrentPlaylist(map, places) {
 		if (canChangePlaylist) {
 			await Player.changePlaylist(centeredPlace.id);
 		}
-	} else if (playerPlaylistId !== null && lastCenteredDistance > pauseTrackRadiusPixels) {
+	} else if (playerPlaylistId !== null && lastCenteredDistance > pauseTrackRadiusPixels && !openedPlace) {
 		await Player.stop();
 	}
 }
+const updateCurrentPlaylist = Utils.createSingleExecutor('main-update-current-playlist', _updateCurrentPlaylist);
 
 function initUpdateCurrentPlaylist(map, places) {
 	const singleUpdateCurrentPlaylist = Utils.createSingleExecutor(
-		'main-update-current-playlist',
-		updateCurrentPlaylist.bind(null, map, places),
+		'main-update-current-playlist', 
+		_updateCurrentPlaylist.bind(null, map, places), 
 		true
 	);
 
@@ -130,8 +131,20 @@ async function init(map, places) {
 			offset: [0, -12],
 		});
 
-		marker.on('popupopen', () => { openedPlace = place; });
-		marker.on('popupclose', () => { openedPlace = openedPlace === place ? null : openedPlace; });
+		marker.on('popupopen', () => { 
+			openedPlace = place;
+			const state = Player.getState();
+			if (state.volume > 0) {
+				updateCurrentPlaylist(map, places);
+			}
+		});
+		marker.on('popupclose', () => { 
+			openedPlace = openedPlace === place ? null : openedPlace; 
+			const state = Player.getState();
+			if (state.volume > 0) {
+				updateCurrentPlaylist(map, places);
+			}
+		});
 
 		markers.push(marker);
 	});
