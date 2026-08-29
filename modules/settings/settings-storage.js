@@ -1,75 +1,97 @@
 import SpotifyAuthStorage from "../spotify/spotify-auth-storage.js";
 
-function normalizeValues(/** @type {string | string[] | null | undefined} */ value) {
-    const values = Array.isArray(value) ? value : [value];
-    return values
-        .filter((entry) => typeof entry === 'string')
-        .map((entry) => entry.trim())
-        .filter(Boolean);
+const SETTINGS_KEY = 'settings';
+
+/**
+ * @typedef {Object} SettingsDataEntry
+ * @property {string} url
+ * @property {string} [encryption_key]
+ * @property {number} [welcome_shown_at]
+ */
+
+/**
+ * @typedef {Object} Settings
+ * @property {SettingsDataEntry[]} data
+ */
+
+function createDataEntry(/** @type {SettingsDataEntry} */ entry = {}) {
+    return {
+        url: typeof entry.url === 'string' ? entry.url : undefined,
+        encryption_key: typeof entry.encryption_key === 'string' ? entry.encryption_key : undefined,
+        welcome_shown_at: typeof entry.welcome_shown_at === 'number' ? entry.welcome_shown_at : undefined,
+    };
 }
 
-function getDataUrls() {
-    const rawValue = localStorage.getItem('data_urls');
+/**
+ * @returns {Settings}
+ */
+function getSettings() {
+    const defaultValue = { data: [{ url: './data/data.json' }] };
+
+    const rawValue = localStorage.getItem(SETTINGS_KEY);
     if (!rawValue) {
-        return [];
+        return defaultValue;
     }
 
     try {
-        return normalizeValues(JSON.parse(rawValue));
+        const settings = JSON.parse(rawValue);
+        if (!settings || typeof settings !== 'object' || Array.isArray(settings)) {
+            return defaultValue;
+        }
+
+        const data = Array.isArray(settings.data) ? settings.data : [];
+        const result = {
+            data: data
+                .filter((entry) => entry && typeof entry === 'object' && !Array.isArray(entry))
+                .map((entry) => createDataEntry({
+                    url: entry.url,
+                    encryption_key: entry.encryption_key,
+                    welcome_shown_at: typeof entry.welcome_shown_at === 'number' ? entry.welcome_shown_at : undefined,
+                }))
+                .filter((entry) => entry.url || entry.encryption_key || typeof entry.welcome_shown_at === 'number'),
+        };
+
+        if (result.data.length === 0) {
+            return defaultValue;
+        }
+
+        return result;
     } catch {
-        return normalizeValues(rawValue);
+        return defaultValue;
     }
 }
-function setDataUrls(/** @type {string | string[] | null} */ dataUrls) {
-    const values = normalizeValues(dataUrls);
-    if (!values.length) {
-        clearDataUrls();
-        return;
-    }
 
-    localStorage.setItem('data_urls', JSON.stringify(values));
+function setSettings(/** @type {Settings | null | undefined} */ nextSettings) {
+    const settings = nextSettings && typeof nextSettings === 'object' && !Array.isArray(nextSettings)
+        ? nextSettings
+        : { data: [] };
+
+    const normalizedSettings = {
+        data: Array.isArray(settings.data)
+            ? settings.data
+                .filter((entry) => entry && typeof entry === 'object' && !Array.isArray(entry))
+                .map((entry) => createDataEntry({
+                    url: entry.url,
+                    encryption_key: entry.encryption_key,
+                    welcome_shown_at: entry.welcome_shown_at,
+                }))
+                .filter((entry) => entry.url || entry.encryption_key || typeof entry.welcome_shown_at === 'number')
+            : [],
+    };
+
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(normalizedSettings));
 }
 
-function clearDataUrls() {
-    localStorage.removeItem('data_urls');
-}
-
-function getEncryptionKeys() {
-    const rawValue = localStorage.getItem('encryption_keys');
-    if (!rawValue) {
-        return [];
-    }
-
-    try {
-        return normalizeValues(JSON.parse(rawValue));
-    } catch {
-        return normalizeValues(rawValue);
-    }
-}
-function setEncryptionKeys(/** @type {string | string[] | null} */ encryptionKeys) {
-    const values = normalizeValues(encryptionKeys);
-    if (!values.length) {
-        clearEncryptionKeys();
-        return;
-    }
-
-    localStorage.setItem('encryption_keys', JSON.stringify(values));
-}
-
-function clearEncryptionKeys() {
-    localStorage.removeItem('encryption_keys');
+function clearSettings() {
+    localStorage.removeItem(SETTINGS_KEY);
 }
 
 const SettingsStorage = {
     Spotify: SpotifyAuthStorage,
 
-    getDataUrls,
-    setDataUrls,
-    clearDataUrls,
-
-    getEncryptionKeys,
-    setEncryptionKeys,
-    clearEncryptionKeys,
+    getSettings,
+    setSettings,
+    clearSettings,
 };
 
 export default SettingsStorage;

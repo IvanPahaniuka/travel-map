@@ -22,8 +22,9 @@ function appendValuesToUrl(/** @type {URL} */ url, /** @type {string} */ paramNa
 
 function createShareUrl() {
     const shareUrl = new URL(window.location.href);
-    const dataUrls = SettingsStorage.getDataUrls();
-    const encryptionKeys = SettingsStorage.getEncryptionKeys();
+    const settings = SettingsStorage.getSettings();
+    const dataUrls = settings.data.map((entry) => entry.url);
+    const encryptionKeys = settings.data.map((entry) => entry.encryption_key);
 
     appendValuesToUrl(shareUrl, 'data_urls', dataUrls);
     appendValuesToUrl(shareUrl, 'encryption_keys', encryptionKeys);

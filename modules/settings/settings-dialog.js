@@ -6,8 +6,9 @@ import Utils from '../utils.js';
 import SettingsStorage from './settings-storage.js';
 
 const show = Utils.createSingleExecutor('settings-dialog', async () => {
-    const initialDataUrl = SettingsStorage.getDataUrls()?.[0];
-    const initialEncryptionKey = SettingsStorage.getEncryptionKeys()?.[0];
+    const settings = SettingsStorage.getSettings();
+    const initialDataUrl = settings.data[0].url;
+    const initialEncryptionKey = settings.data[0].encryption_key;
 
     const contentElement = document.createElement('div');
     contentElement.className = 'settings-dialog-content';
@@ -29,10 +30,11 @@ const show = Utils.createSingleExecutor('settings-dialog', async () => {
 
     const result = await showResult.promise;
 
-    if (SettingsStorage.getDataUrls()?.[0] !== initialDataUrl) {
+    const nextSettings = SettingsStorage.getSettings();
+    if (nextSettings.data[0].url !== initialDataUrl) {
         window.location.reload();
     }
-    if (SettingsStorage.getEncryptionKeys()?.[0] !== initialEncryptionKey) {
+    if (nextSettings.data[0].encryption_key !== initialEncryptionKey) {
         window.location.reload();
     }
 
@@ -49,13 +51,15 @@ const show = Utils.createSingleExecutor('settings-dialog', async () => {
         const inputElement = document.createElement('input');
         inputElement.className = 'settings-input settings-data-url-input';
         inputElement.type = 'url';
-        inputElement.value = SettingsStorage.getDataUrls()?.[0] || '';
+        inputElement.value = SettingsStorage.getSettings().data[0]?.url || '';
         inputElement.addEventListener('change', () => {
             const dataUrl = inputElement.value.trim();
+            const currentSettings = SettingsStorage.getSettings();
+            const entry = currentSettings.data[0] || { url: '' };
             if (dataUrl) {
-                SettingsStorage.setDataUrls([dataUrl]);
+                SettingsStorage.setSettings({ data: [{ ...entry, url: dataUrl }] });
             } else {
-                SettingsStorage.clearDataUrls();
+                SettingsStorage.setSettings({ data: [{ ...entry, url: '' }] });
             }
         });
 
@@ -75,13 +79,15 @@ const show = Utils.createSingleExecutor('settings-dialog', async () => {
         const inputElement = document.createElement('input');
         inputElement.className = 'settings-input settings-encryption-key-input';
         inputElement.type = 'password';
-        inputElement.value = SettingsStorage.getEncryptionKeys()?.[0] || '';
+        inputElement.value = SettingsStorage.getSettings().data[0]?.encryption_key || '';
         inputElement.addEventListener('change', () => {
             const encryptionKey = inputElement.value;
+            const currentSettings = SettingsStorage.getSettings();
+            const entry = currentSettings.data[0] || { encryption_key: undefined };
             if (encryptionKey) {
-                SettingsStorage.setEncryptionKeys([encryptionKey]);
+                SettingsStorage.setSettings({ data: [{ ...entry, encryption_key: encryptionKey }] });
             } else {
-                SettingsStorage.clearEncryptionKeys();
+                SettingsStorage.setSettings({ data: [{ ...entry, encryption_key: undefined }] });
             }
         });
 

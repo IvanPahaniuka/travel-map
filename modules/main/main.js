@@ -24,7 +24,8 @@ import UI from '../ui/ui.js';
 
 async function loadData() {
 	try {
-		const dataUrl = SettingsStorage.getDataUrls()?.[0] || './data/data.json';
+		const settings = SettingsStorage.getSettings();
+		const dataUrl = settings.data[0].url;
 		const response = await fetch(dataUrl);
 		if (!response.ok) {
 			throw new Error(`Unable to load data.json (${response.status})`);
@@ -74,27 +75,49 @@ function showWelcomeDialog(welcome) {
 		return;
 	}
 
+	const settings = SettingsStorage.getSettings();
+	const lastWelcomeShownAt = settings.data[0].welcome_shown_at;
+	if (typeof lastWelcomeShownAt === 'number' && Date.now() - lastWelcomeShownAt < 30 * 60 * 1000) {
+		settings.data[0].welcome_shown_at = Date.now();
+		SettingsStorage.setSettings(settings);
+		return;
+	}
+
 	Translations.add('welcome-title', welcome?.title);
 	Translations.add('welcome-message', welcome?.message);
 
-	return UI.Dialog.show({
+	const result = UI.Dialog.show({
 		title: Translations.get('welcome-title'),
 		message: Translations.get('welcome-message'),
 	});
+
+	settings.data[0].welcome_shown_at = Date.now();
+	SettingsStorage.setSettings(settings);
+
+	return result;
 }
 
 function applySharedSettingsFromQuery() {
 	const params = new URLSearchParams(window.location.search);
+	const settings = SettingsStorage.getSettings();
+	const currentData = settings.data.slice();
 
 	const dataUrls = params.getAll('data_urls');
 	if (dataUrls.length) {
-		SettingsStorage.setDataUrls(dataUrls);
+		const nextData = currentData.length ? currentData : [{ url: '' }];
+		nextData[0] = { ...nextData[0], url: dataUrls[0] };
+		SettingsStorage.setSettings({ data: nextData });
 		params.delete('data_urls');
 	}
 
 	const encryptionKeys = params.getAll('encryption_keys');
 	if (encryptionKeys.length) {
-		SettingsStorage.setEncryptionKeys(encryptionKeys);
+		const nextData = SettingsStorage.getSettings().data.slice();
+		if (!nextData.length) {
+			nextData.push({ url: '' });
+		}
+		nextData[0] = { ...nextData[0], encryption_key: encryptionKeys[0] };
+		SettingsStorage.setSettings({ data: nextData });
 		params.delete('encryption_keys');
 	}
 
