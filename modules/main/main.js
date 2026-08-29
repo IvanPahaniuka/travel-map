@@ -7,9 +7,10 @@ import SettingsButton from '../settings/settings-button.js';
 import SettingsStorage from '../settings/settings-storage.js';
 import ShareButton from '../share/share-button.js';
 
+// TODO add welcome-card
 // TODO Spotify playback. Return canPlay => false if Spotify is not authenticated
 // TODO change to place playlist after popup open
-// TODO add welcome-card
+// TODO remove settings input autofocus
 // TODO add files patterns support for images (e.g. ./paris-2023/*.*)
 // TODO add files patterns support for tracks
 // TODO add multiple data sources support (data switch)
