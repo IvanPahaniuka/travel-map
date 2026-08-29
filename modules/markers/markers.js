@@ -2,6 +2,8 @@ import Popup from "./popup.js";
 import Player from "../player/player.js";
 import Utils from "../utils.js";
 
+let openedPlace = null;
+
 function createMarkerIcon() {
 	return L.divIcon({
 		html: '<span class="marker-dot"></span>',
@@ -23,6 +25,11 @@ async function updateCurrentPlaylist(map, places) {
 	let centeredPlace = null;
 	let centeredDistance = Number.POSITIVE_INFINITY;
 	let lastCenteredDistance = Number.POSITIVE_INFINITY;
+
+	if (openedPlace) {
+		centeredPlace = openedPlace;
+		centeredDistance = 0;
+	}
 
 	const playerState = Player.getState();
 	const playerPlaylist = playerState.currentPlaylist;
@@ -122,6 +129,9 @@ async function init(map, places) {
 			closeButton: false,
 			offset: [0, -12],
 		});
+
+		marker.on('popupopen', () => { openedPlace = place; });
+		marker.on('popupclose', () => { openedPlace = openedPlace === place ? null : openedPlace; });
 
 		markers.push(marker);
 	});

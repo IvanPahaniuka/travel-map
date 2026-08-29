@@ -9,13 +9,12 @@ import ShareButton from '../share/share-button.js';
 import UI from '../ui/ui.js';
 
 // TODO Spotify playback. Return canPlay => false if Spotify is not authenticated
-// TODO change to place playlist after popup open
 // TODO remove settings input autofocus
+// TODO migrate to TS/React/NPM stack
 // TODO add files patterns support for images (e.g. ./paris-2023/*.*)
 // TODO add files patterns support for tracks
 // TODO add multiple data sources support (data switch)
 // TODO implement video preview (maybe extend gallery items with objects support e.g. { "url": "....", "preview": "....." })
-// TODO migrate to TS/React/NPM stack
 // TODO move all icons (except spotify) to ui/icons
 // TODO add playback logo, colors and service link to track to player as it may be required by some services (e.g. spotify)
 // TODO implement EventBus util
