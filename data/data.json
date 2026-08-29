@@ -1,4 +1,18 @@
 {
+	"welcome": {
+		"title": {
+			"default": "Travel Map",
+			"es": "Mapa de Viajes",
+			"it": "Mappa dei Viaggi",
+			"ru": "Карта путешествий"
+		},
+		"message": {
+			"default": "Explore travels around the world. Click any marker to view photos, video and curated music from each destination.",
+			"es": "Explora viajes por el mundo. Haz clic en cualquier marcador para ver fotos, videos y música seleccionada de cada destino.",
+			"it": "Esplora viaggi in tutto il mondo. Fai clic su qualsiasi marcatore per visualizzare foto, video e musica curata da ogni destinazione.",
+			"ru": "Исследуйте путешествия по всему миру. Нажмите на любой маркер, чтобы просмотреть фотографии, видео и подобранную музыку из каждого места назначения."
+		}
+	},
 	"places": [
 		{
 			"id": "paris-2023",

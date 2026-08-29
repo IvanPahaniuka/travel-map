@@ -6,8 +6,8 @@ import SpotifyAuthDialog from '../spotify/spotify-auth-dialog.js';
 import SettingsButton from '../settings/settings-button.js';
 import SettingsStorage from '../settings/settings-storage.js';
 import ShareButton from '../share/share-button.js';
+import UI from '../ui/ui.js';
 
-// TODO add welcome-card
 // TODO Spotify playback. Return canPlay => false if Spotify is not authenticated
 // TODO change to place playlist after popup open
 // TODO remove settings input autofocus
@@ -69,10 +69,18 @@ async function loadData() {
 	}
 }
 
-async function loadPlaces() {
-	const data = await loadData();
-	const places =  data?.places || [];
-	return places;
+function showWelcomeDialog(welcome) {
+	if (typeof welcome !== 'object') {
+		return;
+	}
+
+	Translations.add('welcome-title', welcome?.title);
+	Translations.add('welcome-message', welcome?.message);
+
+	return UI.Dialog.show({
+		title: Translations.get('welcome-title'),
+		message: Translations.get('welcome-message'),
+	});
 }
 
 function applySharedSettingsFromQuery() {
@@ -109,9 +117,12 @@ async function init() {
 			'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
 	}).addTo(map);
 
-	const places = await loadPlaces();
+	const data = await loadData();
+	const places =  data?.places || [];
 
 	Translations.addPlaces(places);
+
+	showWelcomeDialog(data?.welcome);
 
 	const spotifyResult = await Spotify.init();
 	if (!spotifyResult.isAuthorized) {
