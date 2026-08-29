@@ -71,31 +71,3 @@ body {
 .hidden {
 	display: none !important;
 }
-
-.travel-marker {
-	background: transparent;
-	border: none;
-}
-
-.leaflet-marker-icon {
-	filter: drop-shadow(0 6px 16px rgba(82, 41, 25, 0.25));
-}
-
-.marker-dot {
-	display: block;
-	width: 24px;
-	height: 24px;
-	border-radius: 50%;
-	background: linear-gradient(135deg, var(--primary), var(--primary-hover));
-	border: 3px solid #fff;
-	box-shadow: 0 6px 18px rgba(82, 41, 25, 0.22);
-}
-
-@media (max-width: 900px) {
-	.hero-card {
-		max-width: calc(100vw - 2rem);
-		top: 1rem;
-		left: 1rem;
-		right: 1rem;
-	}
-}
