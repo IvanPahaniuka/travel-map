@@ -1,4 +1,9 @@
-const translations = {
+export type LanguageCode = keyof (typeof standardTranslations) | (string & {});
+export type LocalizedString = Record<LanguageCode, string>;
+export type Translations = typeof standardTranslations | typeof translations;
+export type TranslationKey = keyof Translations[keyof Translations] | (string & {});
+
+const standardTranslations = {
 	'default': {
 		'spotify-auth-dialog-title': 'Spotify Playback',
 		'spotify-auth-dialog-message': 'Login to Spotify to enable music playback',
@@ -11,6 +16,8 @@ const translations = {
 
 		'player-widget-track-name-empty': 'No active playback',
 		'player-widget-track-name-unknown': 'Unknown track',
+
+		'unknown-place-title': 'Unknown place',
 	},
 	'es': {
 		'spotify-auth-dialog-title': 'Reproducción de Spotify',
@@ -24,6 +31,8 @@ const translations = {
 
 		'player-widget-track-name-empty': 'No hay reproducción activa',
 		'player-widget-track-name-unknown': 'Pista desconocida',
+
+		'unknown-place-title': 'Lugar desconocido',
 	},
 	'it': {
 		'spotify-auth-dialog-title': 'Riproduzione Spotify',
@@ -37,6 +46,8 @@ const translations = {
 
 		'player-widget-track-name-empty': 'Nessuna riproduzione attiva',
 		'player-widget-track-name-unknown': 'Brano sconosciuto',
+
+		'unknown-place-title': 'Luogo sconosciuto',
 	},
 	'ru': {
 		'spotify-auth-dialog-title': 'Spotify Музыка',
@@ -50,21 +61,36 @@ const translations = {
 
 		'player-widget-track-name-empty': 'Нет активного трека',
 		'player-widget-track-name-unknown': 'Неизвестный трек',
+
+		'unknown-place-title': 'Неизвестное место',
 	},
 };
 
-function getPreferredLanguage() {
-	const lang = navigator.language || navigator.userLanguage || 'default';
+const translations: Record<LanguageCode, Record<string, string>> = { ...standardTranslations };
+
+function getPreferredLanguage(): LanguageCode {
+	const lang = navigator.language || 'default';
 	const short = lang.split('-')[0];
-	return translations[short] ? short : 'default';
+	return Object.hasOwn(translations, short) ? short : 'default';
 }
 
-function get(key, language = undefined) {
+function get(key: TranslationKey, language: LanguageCode | undefined = undefined): string {
 	language = language || getPreferredLanguage();
-	return (translations[language] ?? translations['default'])[key] ?? translations['default'][key] ?? '';
+	return translations[language]?.[key] ?? translations['default'][key] ?? '';
 }
 
-function add(key, value, language = undefined) {
+function getFromValue(value: LocalizedString | string, language: LanguageCode | undefined = undefined): string {
+	if (typeof value === 'string') {
+		return value;
+	} else if (typeof value === 'object') {
+		language = language || getPreferredLanguage();
+		return value[language] ?? value['default'] ?? '';
+	} else {
+		return '';
+	}
+}
+
+function add(key: TranslationKey, value: LocalizedString | string, language: LanguageCode | undefined = undefined) {
 	if (typeof value === 'string') {
 		language = language || 'default';
 		translations[language] = translations[language] ?? {};
@@ -78,18 +104,18 @@ function add(key, value, language = undefined) {
 	}
 }
 
-function addPlaces(places = undefined) {
-
-	places?.forEach((place) => {
-		add(`place-${place.id}-title`, place.title);
-	});
-
+function isLocalizedString(value: unknown): value is LocalizedString {
+	if (typeof value !== 'object' || value === null) return false;
+	if (Object.keys(value).some(k => typeof k !== 'string')) return false;
+	if (Object.values(value).some(v => typeof v !== 'string')) return false;
+	return true;
 }
 
 const Translations = {
-	addPlaces,
 	add,
 	get,
+	getFromValue,
+	isLocalizedString,
 };
 
 

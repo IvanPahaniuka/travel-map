@@ -1,4 +1,11 @@
-@import '../markers/popup.css';
+#map {
+  width: 100%;
+  height: 100vh;
+}
+
+.leaflet-container {
+  background: #dfeaf5;
+}
 
 .travel-marker {
 	background: transparent;
