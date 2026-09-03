@@ -1,4 +1,4 @@
-function getIconUrl(source) {
+function getIconUrl(source: string) {
     return new URL(`./icons/${source}`, import.meta.url).toString();
 }
 

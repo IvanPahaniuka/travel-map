@@ -1,4 +1,4 @@
-import { useEffect, useState, Ref } from 'react';
+import { useEffect, useState, Ref, RefCallback, useCallback } from 'react';
 
 type FetchState<T> = {
     data: T | null;
@@ -41,6 +41,41 @@ function useFetch<T>(url: string, parse: (response: Response) => Promise<T>) {
     return state;
 }
 
+function useMergedRef<T>(...refs: (Ref<T> | undefined)[]): RefCallback<T> {
+    return useCallback((current: T | null) => {
+        const cleanups: [number, () => void][] = [];
+
+        refs.forEach((ref, index) => {
+            if (typeof ref === 'function') {
+                const cleanup = ref(current);
+                if (typeof cleanup === 'function') {
+                    cleanups.push([index, cleanup]);
+                }
+            } else if (typeof ref === 'object' && ref !== null) {
+                ref.current = current;
+            }
+        });
+
+        if (cleanups.length === 0) {
+            return;
+        }
+
+        return () => {
+            let cleanupIndex = 0;
+            refs.forEach((ref, index) => {
+                if (cleanups[cleanupIndex]?.[0] === index) {
+                    cleanups[cleanupIndex][1]();
+                    cleanupIndex++;
+                } else if (typeof ref === 'function') {
+                    ref(null);
+                } else if (typeof ref === 'object' && ref !== null) {
+                    ref.current = null;
+                }
+            });
+        };
+    }, refs);
+}
+
 function setRef<T>(ref: Ref<T> | undefined, current: T | null) {
     if (typeof ref === 'function') {
         ref(current);
@@ -75,6 +110,7 @@ async function skipOrExecute<A extends unknown[], R>(key: string, func: (...args
 
 const Utils = {
     useFetch,
+    useMergedRef,
     setRef,
     createWaitingExecutor,
     createSkippingExecutor,

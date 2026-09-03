@@ -36,3 +36,27 @@ dialog.dialog-content .dialog-content-close-button:hover {
 dialog.dialog-content::backdrop {
 	background: rgba(0, 0, 0, 0.5);
 }
+
+.dialog-content .dialog-content-group {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.dialog-content .dialog-header {
+	margin: 0;
+	font-size: 1.5rem;
+}
+
+.dialog-content .dialog-message {
+	margin: 0;
+	color: #4d4d4d;
+	line-height: 1.6;
+}
+
+.dialog-content .dialog-buttons-group {
+	display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+}

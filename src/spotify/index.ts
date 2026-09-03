@@ -1,18 +1,15 @@
-import SpotifyAuth from './spotify-auth.js';
-import SpotifyIcons from './spotify-icons.js';
+import SpotifyAuth from './spotify-auth';
 
-/**
- * @typedef SpotifyInitResult
- * @type {object}
- * @property {boolean} isAuthorized
- */
+export type SpotifyInitResult = {
+  isAuthorized: boolean;
+}
 
-let player = null;
-let deviceId = null;
+let player: SpotifySdk.Player | null = null;
+let deviceId: string | null = null;
 
 let ensureSdkPromise;
 function ensureSdkLoaded() {
-  return ensureSdkPromise ??= new Promise((resolve, reject) => {
+  return ensureSdkPromise ??= new Promise<void>((resolve, reject) => {
     window.onSpotifyWebPlaybackSDKReady = () => {
       resolve();
     }
@@ -23,11 +20,9 @@ function ensureSdkLoaded() {
 
     document.body.appendChild(script);
   });
-
-  return ensureSdkPromise;
 }
 
-let ensureSpotifyPlayerReadyPromise;
+let ensureSpotifyPlayerReadyPromise: Promise<void> | null = null;
 async function ensureSpotifyPlayerReady() {
   if (player) {
     return;
@@ -53,7 +48,7 @@ async function ensureSpotifyPlayerReady() {
 
     const spotifyPlayer = new window.Spotify.Player({
       name: 'TravelMap Spotify Player',
-      getOAuthToken: (cb) => SpotifyAuth.getAccessToken().then(at => cb(at)),
+      getOAuthToken: (cb) => SpotifyAuth.getAccessToken().then(at => cb(at ?? '')),
       volume: 1,
     });
 
@@ -93,52 +88,52 @@ async function ensureSpotifyPlayerReady() {
   });
 }
 
-async function setVolume(volume) {
+async function setVolume(volume: number) {
   await ensureSpotifyPlayerReady();
-  await player.setVolume(volume);
+  await player!.setVolume(volume);
 }
 
 async function getVolume() {
   await ensureSpotifyPlayerReady();
-  return await player.getVolume();
+  return await player!.getVolume();
 }
 
 async function pause() {
   await ensureSpotifyPlayerReady();
-  await player.pause();
+  await player!.pause();
 }
 
 async function resume() {
   await ensureSpotifyPlayerReady();
-  await player.resume();
+  await player!.resume();
 }
 
 async function next() {
   await ensureSpotifyPlayerReady();
-  await player.nextTrack();
+  await player!.nextTrack();
 }
 
-async function seek(positionMs) {
+async function seek(positionMs: number) {
   await ensureSpotifyPlayerReady();
-  await player.seek(positionMs);
+  await player!.seek(positionMs);
 }
 
 async function getCurrentState() {
   await ensureSpotifyPlayerReady();
-  return await player.getCurrentState();
+  return await player!.getCurrentState();
 }
 
-async function subscribeToPlayerState(callback) {
+async function subscribeToPlayerState(callback: SpotifySdk.PlaybackStateListener) {
   if (!callback || typeof callback !== 'function') {
     return;
   }
 
   await ensureSpotifyPlayerReady();
-  player.addListener('player_state_changed', callback);
+  player!.addListener('player_state_changed', callback);
 }
 
-const trackByTrackUriCache = {}
-async function getTrack(trackUri) {
+const trackByTrackUriCache: Record<string, unknown> = {}
+async function getTrack(trackUri: string): Promise<unknown> {
   if (trackByTrackUriCache[trackUri]) {
     return trackByTrackUriCache[trackUri];
   }
@@ -175,7 +170,7 @@ async function getTrack(trackUri) {
   return result;
 }
 
-async function play(trackUri, position = 0) {
+async function play(trackUri: string, position: number = 0) {
   const accessToken = await SpotifyAuth.getAccessToken();
   if (!accessToken) {
     throw 'Spotify access token is missing, cannot play track.';
@@ -207,8 +202,7 @@ async function isAuthorized() {
 async function init() {
   const isAuthorized = await SpotifyAuth.init();
 
-  /** @type {SpotifyInitResult} */
-  const result = {
+  const result: SpotifyInitResult = {
     isAuthorized,
   };
 
@@ -230,7 +224,6 @@ const Spotify = {
   getTrack,
   getCurrentState,
   subscribeToPlayerState,
-  icons: SpotifyIcons,
 };
 
 export default Spotify;

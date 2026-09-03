@@ -1,6 +1,11 @@
-import SpotifyAuthStorage from './spotify-auth-storage.js';
+import SpotifyAuthStorage from './spotify-auth-storage';
 
-const SPOTIFY_CLIENT_ID = '53f4f99e88604240ba44e392508ac865';
+interface RefreshError extends Error {
+	code?: 'invalid_grant';
+	status?: number;
+}
+
+const SPOTIFY_CLIENT_ID: string = '53f4f99e88604240ba44e392508ac865';
 const REDIRECT_URI = window.location.origin && window.location.origin !== 'null'
 	? `${window.location.origin}${window.location.pathname}`
 	: `${window.location.href}`;
@@ -16,26 +21,26 @@ function clearSpotifyQuery() {
 	window.history.replaceState({}, document.title, cleanUrl);
 }
 
-function base64encode(input) {
+function base64encode(input: ArrayBuffer) {
 	return btoa(String.fromCharCode(...new Uint8Array(input)))
 		.replace(/=/g, '')
 		.replace(/\+/g, '-')
 		.replace(/\//g, '_');
 }
 
-async function sha256(plain) {
+async function sha256(plain: string) {
 	const encoder = new TextEncoder();
 	const data = encoder.encode(plain);
 	return window.crypto.subtle.digest('SHA-256', data);
 }
 
-function generateRandomString(length) {
+function generateRandomString(length: number) {
 	const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 	const values = crypto.getRandomValues(new Uint8Array(length));
 	return values.reduce((acc, x) => acc + possible[x % possible.length], '');
 }
 
-async function generateCodeChallenge(codeVerifier) {
+async function generateCodeChallenge(codeVerifier: string) {
 	const hashed = await sha256(codeVerifier);
 	const codeChallenge = base64encode(hashed);
 	return codeChallenge;
@@ -73,7 +78,7 @@ async function authorize() {
 	window.location.assign(authUrl.toString());
 }
 
-async function exchangeCodeForToken(code) {
+async function exchangeCodeForToken(code: string) {
 	const codeVerifier = SpotifyAuthStorage.getAuthCodeVerifier();
 	if (!codeVerifier) {
 		throw new Error('PKCE code verifier is missing.');
@@ -120,7 +125,7 @@ async function exchangeCodeForToken(code) {
 async function refreshSpotifyAccessToken() {
 	const refreshToken = SpotifyAuthStorage.getRefreshToken();
 	if (!refreshToken) {
-		const error = new Error(`Spotify refresh token is missing.`);
+		const error = new Error(`Spotify refresh token is missing.`) as RefreshError;
 		error.code = 'invalid_grant';
 		throw error;
 	}
@@ -147,7 +152,7 @@ async function refreshSpotifyAccessToken() {
 			const error = new Error(
 				`Unable to refresh access token (${response.status})` 
 				+ payload.error_description && `: ${payload.error_description}`
-			);
+			) as RefreshError;
 
 			error.code = payload.error;
 			error.status = response.status;
@@ -197,7 +202,9 @@ async function getAccessToken() {
 		} catch (error) {
 			console.warn('Unable to refresh Spotify access token:', error);
 
-			if (error.code === 'invalid_grant' || (Date.now() - updatedAt > maxStaleTimeOnError)) {
+			if (typeof error === 'object' && error !== null
+				&& ('code' in error && error.code === 'invalid_grant' || (Date.now() - updatedAt > maxStaleTimeOnError))
+			) {
 				SpotifyAuthStorage.clearAccessToken();
 				SpotifyAuthStorage.clearRefreshToken();
 			} else if (accessToken) {

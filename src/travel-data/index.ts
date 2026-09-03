@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import SettingsStorage from "../settings/settings-storage";
 import Translations from "../translations";
-import Utils from "../utils";
+import Utils from "../common/utils";
 
 export type TravelData = {
   welcome?: {

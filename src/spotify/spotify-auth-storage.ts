@@ -4,13 +4,12 @@ const SpotifyAuthStorage = {
         const accessToken = localStorage.getItem('spotify_access_token') || '';
         const updatedAtStr = localStorage.getItem('spotify_access_token_updated_at');
         const updatedAt = updatedAtStr ? Number(updatedAtStr) : 0;
-        /** @type {[string, number]} */
-        const result = [accessToken, updatedAt];
+        const result: [string, number] = [accessToken, updatedAt];
         return result;
     },
-    setAccessToken: (accessToken) => {
+    setAccessToken: (accessToken: string) => {
         localStorage.setItem('spotify_access_token', accessToken);
-        localStorage.setItem('spotify_access_token_updated_at', Date.now());
+        localStorage.setItem('spotify_access_token_updated_at', Date.now().toString());
     },
     clearAccessToken: () => {
         localStorage.removeItem('spotify_access_token');
@@ -20,7 +19,7 @@ const SpotifyAuthStorage = {
     getRefreshToken: () => {
         return localStorage.getItem('spotify_refresh_token') || '';
     },
-    setRefreshToken: (refreshToken) => {
+    setRefreshToken: (refreshToken: string) => {
         localStorage.setItem('spotify_refresh_token', refreshToken);
     },
     clearRefreshToken: () => {
@@ -30,7 +29,7 @@ const SpotifyAuthStorage = {
     getAuthCodeVerifier: () => {
         return localStorage.getItem('spotify_auth_code_verifier') || '';
     },
-    setAuthCodeVerifier: (codeVerifier) => {
+    setAuthCodeVerifier: (codeVerifier: string) => {
         localStorage.setItem('spotify_auth_code_verifier', codeVerifier);
     },
     clearAuthCodeVerifier: () => {
@@ -40,7 +39,7 @@ const SpotifyAuthStorage = {
     getAuthState: () => {
         return localStorage.getItem('spotify_auth_state') || '';
     },
-    setAuthState: (state) => {
+    setAuthState: (state: string) => {
         localStorage.setItem('spotify_auth_state', state);
     },
     clearAuthState: () => {
@@ -50,8 +49,3 @@ const SpotifyAuthStorage = {
 }
 
 export default SpotifyAuthStorage;
-
-
-
-
-

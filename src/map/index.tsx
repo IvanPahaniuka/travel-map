@@ -6,7 +6,7 @@ import { FC, useState, useEffect, useRef, Ref, useCallback } from 'react';
 import { TravelData, TravelPlace } from '../travel-data';
 import { createPortal } from 'react-dom';
 import { TravelPopup } from './popup';
-import Utils from '../utils';
+import Utils from '../common/utils';
 
 export type TravelMapProps = {
   travelData?: TravelData | null;

@@ -1,44 +1,17 @@
-import * as musicMetadata from 'https://cdn.jsdelivr.net/npm/music-metadata@11.15.0/+esm';
+import * as musicMetadata from 'music-metadata';
+import { PlaybackEvent, PlaybackEventListener, PlaybackTrackState, Track, TrackDetails } from './playbacks';
 
-/**
- * @typedef Track
- * @type {import("./playbacks.js").Track}
- */
+type InternalState = {
+    volume: number;
+    currentTrackState: PlaybackTrackState | null;
+}
 
-/**
- * @typedef TrackDetails
- * @type {import("./playbacks.js").TrackDetails}
- */
-
-/**
- * @typedef PlaybackEvent
- * @type {import("./playbacks.js").PlaybackEvent}
- */
-
-/** 
- * @typedef Playback
- * @type {import("./playbacks.js").Playback}
- */
-
-/** 
- * @typedef PlaybackTrackState
- * @type {import("./playbacks.js").PlaybackTrackState}
- */
-
-/**
- * @typedef InternalState
- * @type {object}
- * @property {number} volume
- * @property {PlaybackTrackState | null} currentTrackState
- */
-
-/** @type {InternalState} */
-const _state = {
+const _state: InternalState = {
     volume: 1,
     currentTrackState: null,
 };
 
-const stateChangedListeners = [];
+const stateChangedListeners: PlaybackEventListener[] = [];
 const audio = new Audio();
 
 audio.addEventListener('timeupdate', () => {
@@ -64,7 +37,7 @@ function getState() {
     };
 }
 
-function canPlay(/** @type {Track} */ track) {
+function canPlay(track: Track) {
     const schemePrefixes = ['https:', 'http:', 'file:', 'blob:', 'data:'];
 
     if (typeof track !== 'string') {
@@ -78,7 +51,11 @@ function canPlay(/** @type {Track} */ track) {
     return true;
 }
 
-async function play(/** @type {Track} */ track, /** @type {number} */ position = 0) {
+async function play(track: Track, position: number = 0) {
+    if (typeof track !== 'string') {
+        throw new Error(`Unexpected track type: ${typeof track}`);
+    }
+
     if (audio.src !== track) {
         audio.src = track;
     }
@@ -100,13 +77,17 @@ async function stop() {
     notifyListencer('state_changed');
 }
 
-async function setVolume(/** @type {number} */ volume) {
+async function setVolume(volume: number) {
     _state.volume = volume;
     audio.volume = volume;
     notifyListencer('state_changed');
 }
 
-async function getTrackDetails(/** @type {Track} */ track) {
+async function getTrackDetails(track: Track): Promise<TrackDetails> {
+    if (typeof track !== 'string') {
+        throw new Error(`Unexpected track type: ${typeof track}`);
+    }
+
     const response = await fetch(track);
     if (!response.ok) throw new Error(`Failed to fetch URL. Status: ${response.status}`);
     const trackBlob = await response.blob();
@@ -124,8 +105,7 @@ async function getTrackDetails(/** @type {Track} */ track) {
 
     const duration = (trackMetadata?.format?.duration ?? 0) * 1000;
 
-    /** @type {TrackDetails} */
-    const trackDetails = {
+    const trackDetails: TrackDetails = {
         name,
         artists,
         duration,
@@ -134,7 +114,7 @@ async function getTrackDetails(/** @type {Track} */ track) {
     return trackDetails;
 }
 
-function notifyListencer(/** @type {PlaybackEvent} */ event) {
+function notifyListencer(event: PlaybackEvent) {
     if (event === 'state_changed') {
         stateChangedListeners.forEach(listener => {
             try {
@@ -146,7 +126,7 @@ function notifyListencer(/** @type {PlaybackEvent} */ event) {
     }
 }
 
-function addEventListener(/** @type {PlaybackEvent} */ event, listener) {
+function addEventListener(event: PlaybackEvent, listener: PlaybackEventListener) {
     if (typeof listener !== 'function') {
         console.warn('Listener must be a function');
         return;
@@ -157,7 +137,7 @@ function addEventListener(/** @type {PlaybackEvent} */ event, listener) {
     }
 }
 
-function removeEventListener(/** @type {PlaybackEvent} */ event, listener) {
+function removeEventListener(event: PlaybackEvent, listener: PlaybackEventListener) {
     if (event === 'state_changed') {
         const index = stateChangedListeners.indexOf(listener);
         if (index !== -1) {

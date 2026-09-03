@@ -1,10 +1,10 @@
-// import SpotifyAuthStorage from "../spotify/spotify-auth-storage.js";
+import SpotifyAuthStorage from "../spotify/spotify-auth-storage";
 
 const SETTINGS_KEY = 'settings';
 
 type SettingsDataEntry = {
     url: string;
-    encryptionKey?: string;
+    encryptionKey: string;
     welcomeShownAt?: number;
 }
 
@@ -13,7 +13,7 @@ type Settings = {
 }
 
 function getSettings(): Settings {
-    const defaultValue = { data: [{ url: './data/data.json' }] };
+    const defaultValue: Settings = { data: [{ url: './data/data.json', encryptionKey: '' }] };
 
     const rawValue = localStorage.getItem(SETTINGS_KEY);
     if (!rawValue) {
@@ -32,12 +32,12 @@ function getSettings(): Settings {
                 .filter((entry) => entry && typeof entry === 'object' && !Array.isArray(entry))
                 .map((entry) => ({
                     url: entry.url,
-                    encryptionKey: entry.encryption_key,
+                    encryptionKey: entry.encryption_key ?? '',
                     welcomeShownAt: entry.welcome_shown_at,
                 }))
                 .filter((entry) => 
                     typeof entry.url === 'string' && entry.url.length > 0
-                    && ['string', 'undefined'].includes(typeof entry.encryptionKey)
+                    && typeof entry.encryptionKey === 'string'
                     && ['number', 'undefined'].includes(entry.welcomeShownAt)
                 ),
         };
@@ -71,7 +71,7 @@ function clearSettings() {
 }
 
 const SettingsStorage = {
-    // Spotify: SpotifyAuthStorage,
+    Spotify: SpotifyAuthStorage,
 
     getSettings,
     setSettings,

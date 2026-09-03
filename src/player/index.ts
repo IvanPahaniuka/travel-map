@@ -1,88 +1,61 @@
-import Utils from '../utils.js';
-import Playbacks from './playbacks.js';
+import Utils from '../common/utils';
+import Playbacks, { Playback, PlaybackState, Track } from './playbacks';
 
-/** 
- * @typedef Playback
- * @type {import("./playbacks.js").Playback}
- */
+export type TrackState = {
+	index: number;
+	position: number;
+	duration: number;
+	name: string | undefined;
+	artists: string[] | undefined;
+	updatedAt: number;
+}
 
-/** 
- * @typedef PlaybackState
- * @type {import('./playbacks.js').PlaybackState} 
- */
+type InternalPlaylist = {
+	id: string;
+	tracks: Track[];
+	trackPlaybacks: (Playback | null)[];
+	currentTrackState: TrackState | null;
+}
 
-/**
- * @typedef Track
- * @type {unknown}
- */
+type InternalState = {
+	volume: number;
+	playlists: InternalPlaylist[];
+	currentPlaylist: InternalPlaylist | null;
+}
 
-/**
- * @typedef TrackState
- * @type {object}
- * @property {number} index
- * @property {number} position
- * @property {number} duration
- * @property {string | undefined} name
- * @property {string[] | undefined} artists
- * @property {number} updatedAt  
- */
+export type PlayerEvent = 'state_changed';
+export type PlayerEventListener = () => void;
 
-/**
- * @typedef InternalPlaylist
- * @type {object}
- * @property {string} id
- * @property {Track[]} tracks
- * @property {(Playback | null)[]} trackPlaybacks
- * @property {TrackState | null} currentTrackState
- */
+export type Playlist = {
+	id: string;
+	tracks: Track[];
+	currentTrackState: TrackState | null;
+}
 
-/**
- * @typedef InternalState
- * @type {object}
- * @property {number} volume
- * @property {InternalPlaylist[]} playlists
- * @property {InternalPlaylist | null} currentPlaylist
- */
+export type PlayerState = {
+	volume: number;
+	playlists: Playlist[];
+	currentPlaylist: Playlist | null;
+}
 
-/**
- * @typedef PlayerEvent
- * @type {'state_changed'}
- */
 
-/**
- * @typedef Playlist
- * @type {object}
- * @property {string} id
- * @property {Track[]} tracks
- * @property {TrackState | null} currentTrackState
- */
-
-/**
- * @typedef PlayerState
- * @type {object}
- * @property {number} volume
- * @property {Playlist[]} playlists
- * @property {Playlist | null} currentPlaylist
- */
-
-/** @type {InternalState} */
-const _state = {
+const _state: InternalState = {
 	volume: 0,
 	playlists: [],
 	currentPlaylist: null,
 };
 
-/**
- * Get the current state
- * @returns {PlayerState}
- */
-function getState() {
+function getState(): PlayerState {
 	const playlistsMapped = _state.playlists.map(p => ({
 		id: p.id,
 		tracks: [...p.tracks],
 		currentTrackState: p.currentTrackState && { ...p.currentTrackState },
 	}));
-	const currentPlaylistIndex = _state.playlists.indexOf(_state.currentPlaylist);
+
+	const currentPlaylistIndex = _state.currentPlaylist 
+		? _state.playlists.indexOf(_state.currentPlaylist) 
+		: -1;
+	
 	const currentPlaylistMapped = currentPlaylistIndex >= 0
 		? playlistsMapped[currentPlaylistIndex]
 		: null;
@@ -95,13 +68,13 @@ function getState() {
 }
 
 
-function getRandomInt(min, max) {
+function getRandomInt(min: number, max: number) {
   const minCeiled = Math.ceil(min);
   const maxFloored = Math.floor(max);
   return Math.floor(Math.random() * (maxFloored - minCeiled) + minCeiled); // The maximum is exclusive and the minimum is inclusive
 }
 
-function getPossibleTrackIndexes(/** @type {InternalPlaylist} */ playlist) {
+function getPossibleTrackIndexes(playlist: InternalPlaylist) {
 	
 	const possibleTrackIndexes = playlist.tracks.map((_, i) => i).filter(
 		(index) => 
@@ -112,7 +85,7 @@ function getPossibleTrackIndexes(/** @type {InternalPlaylist} */ playlist) {
 	return possibleTrackIndexes;
 }
 
-async function onPlaybackStateChanged(/** @type {Playback} */ playback) {
+async function onPlaybackStateChanged(playback: Playback) {
 
 	const playlist = _state.currentPlaylist;
 	const trackState = playlist?.currentTrackState;
@@ -129,8 +102,7 @@ async function onPlaybackStateChanged(/** @type {Playback} */ playback) {
 		return;
 	}
 
-	/** @type {PlaybackState} */
-	let playbackState;
+	let playbackState: PlaybackState;
 	try {
 		playbackState = playback.getState();
 	} catch (error) {
@@ -138,7 +110,7 @@ async function onPlaybackStateChanged(/** @type {Playback} */ playback) {
 		return;
 	}
 
-	if (track === playbackState.currentTrackState?.track) {
+	if (playbackState.currentTrackState && track === playbackState.currentTrackState.track) {
 		
 		const positionNew = playbackState.currentTrackState.position;
 		const updatedAtNew = playbackState.currentTrackState.updatedAt;
@@ -155,15 +127,14 @@ async function onPlaybackStateChanged(/** @type {Playback} */ playback) {
 	}
 }
 
-/** @type {[Playback, Function][]} */
-const playbackStateChangedListeners = [];
-function subscribeToPlaybackStateChanged(/** @type {Playback} */ playback) {
+const playbackStateChangedListeners: [Playback, Function][] = [];
+function subscribeToPlaybackStateChanged(playback: Playback) {
 	const hasListener = playbackStateChangedListeners.some(ph => ph[0] === playback);
 	if (hasListener) {
 		return false;
 	}
 
-	const listener = Utils.createSingleExecutor('player-playback-state-changed', onPlaybackStateChanged.bind(null, playback));
+	const listener = Utils.createWaitingExecutor('player-playback-state-changed', onPlaybackStateChanged.bind(null, playback));
 
 	try {
 		playback.addEventListener('state_changed', listener);
@@ -180,7 +151,7 @@ function subscribeToPlaybackStateChanged(/** @type {Playback} */ playback) {
 /**
  * Add a new playlist with tracks
  */
-async function addPlaylist(/** @type {string} */ id, /** @type {Track[]} */ tracks) {
+async function addPlaylist(id: string, tracks: Track[]) {
 	if (!id || !Array.isArray(tracks)) {
 		console.warn('Invalid playlist data: id and tracks array required');
 		return;
@@ -211,8 +182,7 @@ async function addPlaylist(/** @type {string} */ id, /** @type {Track[]} */ trac
 		return null;
 	});
 
-	/** @type {InternalPlaylist} */
-	const playlist = {
+	const playlist: InternalPlaylist = {
 		id,
 		tracks,
 		trackPlaybacks,
@@ -227,7 +197,7 @@ async function addPlaylist(/** @type {string} */ id, /** @type {Track[]} */ trac
 /**
  * Remove a playlist
  */
-async function removePlaylist(/** @type {string} */ id) {
+async function removePlaylist(id: string) {
 	if (_state.currentPlaylist?.id === id) {
 		await stop();
 	}
@@ -246,9 +216,9 @@ async function removePlaylist(/** @type {string} */ id) {
 /**
  * Switch to a different playlist and start playing
  */
-async function changePlaylist(/** @type {string} */ id) {
+async function changePlaylist(id: string) {
 
-	const tryPlayCurrentTrack = async (/** @type {InternalPlaylist} */ playlist) => {
+	const tryPlayCurrentTrack = async (playlist: InternalPlaylist) => {
 
 		const trackState = playlist.currentTrackState;
 
@@ -259,6 +229,10 @@ async function changePlaylist(/** @type {string} */ id) {
 		const trackIndex = trackState.index;
 		const track = playlist.tracks[trackIndex];
 		const trackPlayback = playlist.trackPlaybacks[trackIndex];
+
+		if (!trackPlayback) {
+			return false;
+		}
 
 		const trackDuration = trackState.duration;
 		const trackPositionNew = trackState.position + Date.now() - trackState.updatedAt;
@@ -282,7 +256,7 @@ async function changePlaylist(/** @type {string} */ id) {
 		return true;
 	};
 
-	const tryPlayNextTrack = async (/** @type {InternalPlaylist} */ playlist) => {
+	const tryPlayNextTrack = async (playlist: InternalPlaylist) => {
 
 		const trackState = playlist.currentTrackState;
 
@@ -304,7 +278,7 @@ async function changePlaylist(/** @type {string} */ id) {
 		const trackIndex = possibleTrackIndexes[getRandomInt(0, possibleTrackIndexes.length)];
 
 		const track = playlist.tracks[trackIndex];
-		const trackPlayback = playlist.trackPlaybacks[trackIndex];
+		const trackPlayback = playlist.trackPlaybacks[trackIndex]!;
 
 		let trackDetails;
 		try {
@@ -320,7 +294,7 @@ async function changePlaylist(/** @type {string} */ id) {
 		const trackDurationOld = trackState?.duration;
 		
 		const trackPosition = [trackPositionOld, trackUpdatedAtOld, trackDurationOld].every(v => typeof v === 'number')
-			? ((Math.min(trackPositionOld, trackDurationOld) + Date.now() - trackUpdatedAtOld) % trackDurationOld % trackDuration)
+			? ((Math.min(trackPositionOld!, trackDurationOld!) + Date.now() - trackUpdatedAtOld!) % trackDurationOld! % trackDuration)
 			: getRandomInt(0, trackDuration);
 
 		playlist.currentTrackState = {
@@ -369,7 +343,7 @@ async function changePlaylist(/** @type {string} */ id) {
 /**
  * Set volume for the player
  */
-async function setVolume(/** @type {number} */ volume) {
+async function setVolume(volume: number) {
 	_state.volume = volume;
 
 	const currentPlaylist = _state.currentPlaylist;
@@ -377,7 +351,7 @@ async function setVolume(/** @type {number} */ volume) {
 	
 	if (currentPlaylist && currentTrackState) {
 		const trackIndex = currentTrackState.index;
-		const playback = currentPlaylist.trackPlaybacks[trackIndex];
+		const playback = currentPlaylist.trackPlaybacks[trackIndex]!;
 
 		try {
 			await playback.setVolume(volume);
@@ -414,7 +388,7 @@ async function next() {
 	const trackIndex = possibleTrackIndexes[getRandomInt(0, possibleTrackIndexes.length)];
 
 	const track = playlist.tracks[trackIndex];
-	const trackPlayback = playlist.trackPlaybacks[trackIndex];
+	const trackPlayback = playlist.trackPlaybacks[trackIndex]!;
 
 	let trackDetails;
 	try {
@@ -456,7 +430,7 @@ async function stop() {
 	}
 
 	const trackIndex = currentTrackState.index;
-	const trackPlayback = trackPlaylist.trackPlaybacks[trackIndex];
+	const trackPlayback = trackPlaylist.trackPlaybacks[trackIndex]!;
 
 	_state.currentPlaylist = null;
 
@@ -469,12 +443,12 @@ async function stop() {
 	notifyListenersDeferred('state_changed');
 }
 
-let stateChangedListeners = [];
-let stateChangedListenersNotifying = null;
+let stateChangedListeners: PlayerEventListener[] = [];
+let stateChangedListenersNotifying: PlayerEventListener[] | null = null;
 /**
  * Notify all listeners of state changes
  */
-function notifyListeners(/** @type {PlayerEvent} */ event) {
+function notifyListeners(event: PlayerEvent) {
 	if (event === 'state_changed') {
 		stateChangedListenersNotifying = stateChangedListeners;
 		stateChangedListenersNotifying.forEach(listener => {
@@ -488,8 +462,8 @@ function notifyListeners(/** @type {PlayerEvent} */ event) {
 	}
 }
 
-let stateChangedTimeoutId;
-function notifyListenersDeferred(/** @type {PlayerEvent} */ event) {
+let stateChangedTimeoutId: number | undefined;
+function notifyListenersDeferred(event: PlayerEvent) {
 	const timeoutId = setTimeout(notifyListeners, 0, event);
 
 	if (event === 'state_changed') {
@@ -501,7 +475,7 @@ function notifyListenersDeferred(/** @type {PlayerEvent} */ event) {
 /**
  * Add an event listener for state changes
  */
-function addEventListener(/** @type {PlayerEvent} */ event, /** @type {() => void} */ listener) {
+function addEventListener(event: PlayerEvent, listener: PlayerEventListener) {
 	if (typeof listener !== 'function') {
 		console.warn('Listener must be a function');
 		return;
@@ -519,7 +493,7 @@ function addEventListener(/** @type {PlayerEvent} */ event, /** @type {() => voi
 /**
  * Remove an event listener
  */
-function removeEventListener(/** @type {PlayerEvent} */ event, /** @type {() => void} */ listener) {
+function removeEventListener(event: PlayerEvent, listener: PlayerEventListener) {
 	if (event === 'state_changed') {
 		const index = stateChangedListeners.indexOf(listener);
 		if (index !== -1) {
@@ -535,14 +509,14 @@ function removeEventListener(/** @type {PlayerEvent} */ event, /** @type {() => 
 const Player = {
 	getState,
 	
-	addPlaylist: Utils.createSingleExecutor('player', addPlaylist),
-	removePlaylist: Utils.createSingleExecutor('player', removePlaylist),
-	changePlaylist: Utils.createSingleExecutor('player', changePlaylist),
+	addPlaylist: Utils.createWaitingExecutor('player', addPlaylist),
+	removePlaylist: Utils.createWaitingExecutor('player', removePlaylist),
+	changePlaylist: Utils.createWaitingExecutor('player', changePlaylist),
 
-	setVolume: Utils.createSingleExecutor('player', setVolume),
+	setVolume: Utils.createWaitingExecutor('player', setVolume),
 
-	next: Utils.createSingleExecutor('player', next),
-	stop: Utils.createSingleExecutor('player', stop),
+	next: Utils.createWaitingExecutor('player', next),
+	stop: Utils.createWaitingExecutor('player', stop),
 
 	addEventListener,
 	removeEventListener,

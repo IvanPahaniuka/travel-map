@@ -1,47 +1,20 @@
-import Spotify from "../spotify/spotify.js";
+import Spotify from "../spotify";
+import { Playback, PlaybackEvent, PlaybackEventListener, PlaybackState, PlaybackTrackState, Track, TrackDetails } from "./playbacks";
 
-/**
- * @typedef Track
- * @type {import("./playbacks.js").Track}
- */
+type InternalState = {
+    volume: number;
+    currentTrackState: PlaybackTrackState | null;
+}
 
-/**
- * @typedef TrackDetails
- * @type {import("./playbacks.js").TrackDetails}
- */
-
-/**
- * @typedef PlaybackEvent
- * @type {import("./playbacks.js").PlaybackEvent}
- */
-
-/** 
- * @typedef Playback
- * @type {import("./playbacks.js").Playback}
- */
-
-/** 
- * @typedef PlaybackTrackState
- * @type {import("./playbacks.js").PlaybackTrackState}
- */
-
-/**
- * @typedef InternalState
- * @type {object}
- * @property {number} volume
- * @property {PlaybackTrackState | null} currentTrackState
- */
-
-/** @type {InternalState} */
-const _state = {
+const _state: InternalState = {
     volume: 1,
     currentTrackState: null,
 };
 
-const stateChangedListeners = [];
-let spotifyStateChangedListener = null;
+const stateChangedListeners: PlaybackEventListener[] = [];
+let spotifyStateChangedListener: ((spotifyState: SpotifySdk.PlaybackState) => Promise<void>) | null = null;
 
-async function onSpotifyStateChanged(spotifyState) {
+async function onSpotifyStateChanged(spotifyState: SpotifySdk.PlaybackState) {
     const { 
         position, 
         paused,
@@ -55,7 +28,7 @@ async function onSpotifyStateChanged(spotifyState) {
     const trackState = _state.currentTrackState;
     const track = trackState?.track;
 
-    if (trackState && spotifyTrackUris.includes(track)) {
+    if (trackState && typeof track === 'string' && spotifyTrackUris.includes(track)) {
         if (paused === true && position === 0) {
 
             trackState.position = Infinity;
@@ -82,14 +55,14 @@ function subscribeToSpotifyStateChanged() {
     spotifyStateChangedListener = onSpotifyStateChanged;
 }
 
-function getState() {
+function getState(): PlaybackState {
     return {
         volume: _state.volume,
         currentTrackState: _state.currentTrackState && { ..._state.currentTrackState },
     };
 }
 
-function canPlay(/** @type {Track} */ track) {
+function canPlay(track: Track) {
     if (typeof track !== 'string') {
         return false;
     }
@@ -101,7 +74,11 @@ function canPlay(/** @type {Track} */ track) {
     return true;
 }
 
-async function play(/** @type {Track} */ track, position = 0) {
+async function play(track: Track, position: number = 0) {
+    if (typeof track !== 'string') {
+        throw new Error(`Unexpected track type: ${typeof track}`);
+    }
+
     subscribeToSpotifyStateChanged();
 
     _state.currentTrackState = {
@@ -121,26 +98,45 @@ async function stop() {
     notifyListencer('state_changed');
 }
 
-async function setVolume(volume) {
+async function setVolume(volume: number) {
     _state.volume = volume;
     await Spotify.setVolume(volume);
     notifyListencer('state_changed');
 }
 
-async function getTrackDetails(/** @type {Track} */ track) {
+async function getTrackDetails(track: Track) {
+    if (typeof track !== 'string') {
+        throw new Error(`Unexpected track type: ${typeof track}`);
+    }
+
     const spotifyTrack = await Spotify.getTrack(track);
+
+    if (typeof spotifyTrack !== 'object' || spotifyTrack === null) {
+        throw new Error(`Unexpected spotify track type: ${typeof spotifyTrack}`);
+    }
+
+    if (!('duration_ms' in spotifyTrack) || typeof spotifyTrack.duration_ms !== 'number') {
+        throw new Error(`Expected duration_ms in the spotify track: ${spotifyTrack}`);
+    }
     
-    /** @type {TrackDetails} */
-    const trackDetails = spotifyTrack && {
-        name: spotifyTrack.name,
-        artists: spotifyTrack.artists?.map(a => a.name) ?? [],
+    const trackDetails: TrackDetails = {
+        name: 'name' in spotifyTrack && typeof spotifyTrack.name === 'string' 
+            ? spotifyTrack.name 
+            : undefined,
+        
+        artists: 'artists' in spotifyTrack && Array.isArray(spotifyTrack.artists)
+            ? spotifyTrack.artists
+                .filter((a: unknown) => typeof a === 'object' && a !== null && 'name' in a && typeof a.name === 'string')
+                .map((a: { name: string }) => a.name)
+            : undefined,
+
         duration: spotifyTrack.duration_ms,
     };
 
     return trackDetails;
 }
 
-function notifyListencer(/** @type {PlaybackEvent} */ event) {
+function notifyListencer(event: PlaybackEvent) {
 	if (event === 'state_changed') {
 		stateChangedListeners.forEach(listener => {
 			try {
@@ -152,7 +148,7 @@ function notifyListencer(/** @type {PlaybackEvent} */ event) {
 	}
 }
 
-function addEventListener(/** @type {PlaybackEvent} */ event, listener) {
+function addEventListener(event: PlaybackEvent, listener: PlaybackEventListener) {
 	if (typeof listener !== 'function') {
 		console.warn('Listener must be a function');
 		return;
@@ -163,7 +159,7 @@ function addEventListener(/** @type {PlaybackEvent} */ event, listener) {
 	}
 }
 
-function removeEventListener(/** @type {PlaybackEvent} */ event, listener) {
+function removeEventListener(event: PlaybackEvent, listener: PlaybackEventListener) {
 	if (event === 'state_changed') {
 		const index = stateChangedListeners.indexOf(listener);
 		if (index !== -1) {
@@ -173,8 +169,7 @@ function removeEventListener(/** @type {PlaybackEvent} */ event, listener) {
 }
 
 
-/** @type {Playback} */
-const PlaybackSpotify = {
+const PlaybackSpotify: Playback = {
     getState,
     canPlay,
     play,

@@ -1,52 +1,29 @@
-import Encryption from "../encryption.js";
-import SettingsStorage from "../settings/settings-storage.js";
-import PlaybackFile from "./playback-file.js";
+import Encryption from "../encryption";
+import SettingsStorage from "../settings/settings-storage";
+import PlaybackFile from "./playback-file";
+import { Playback, PlaybackEvent, PlaybackEventListener, PlaybackTrackState, Track } from "./playbacks";
 
-/**
- * @typedef Track
- * @type {import("./playbacks.js").Track}
- */
+type InternalState = {
+    volume: number;
+    currentTrackState: PlaybackTrackState | null;
+}
 
-/**
- * @typedef TrackDetails
- * @type {import("./playbacks.js").TrackDetails}
- */
-
-/**
- * @typedef PlaybackEvent
- * @type {import("./playbacks.js").PlaybackEvent}
- */
-
-/** 
- * @typedef Playback
- * @type {import("./playbacks.js").Playback}
- */
-
-/** 
- * @typedef PlaybackTrackState
- * @type {import("./playbacks.js").PlaybackTrackState}
- */
-
-/**
- * @typedef InternalState
- * @type {object}
- * @property {number} volume
- * @property {PlaybackTrackState | null} currentTrackState
- */
-
-/** @type {InternalState} */
-const _state = {
+const _state: InternalState = {
     volume: 1,
     currentTrackState: null,
 };
 
 const TRACK_PREFIX = 'encrypted:';
 
-const stateChangedListeners = [];
-let decryptedTrackUrl = null;
-let playbackStateChangedListener = null;
+const stateChangedListeners: PlaybackEventListener[] = [];
+let decryptedTrackUrl: string | null = null;
+let playbackStateChangedListener: PlaybackEventListener | null = null;
 
-async function decryptTrack(/** @type {Track} */ track) {
+async function decryptTrack(track: Track) {
+    if (typeof track !== 'string') {
+        throw new Error(`Unexpected track type: ${typeof track}`);
+    }
+
     const response = await fetch(track.slice(TRACK_PREFIX.length));
     if (!response.ok) {
         throw new Error(`Failed to fetch encrypted file. Status: ${response.status}`);
@@ -54,23 +31,11 @@ async function decryptTrack(/** @type {Track} */ track) {
 
     const encryptedData = new Uint8Array(await response.arrayBuffer());
     const settings = SettingsStorage.getSettings();
-    const encryptionKey = settings.data[0].encryption_key;
+    const encryptionKey = settings.data[0].encryptionKey;
 
     const decryptedData = await Encryption.decrypt(encryptedData, encryptionKey);
 
     return new Blob([decryptedData], { type: response.headers.get('content-type') || 'audio/mpeg' });
-}
-
-function notifyListencer(/** @type {PlaybackEvent} */ event) {
-    if (event === 'state_changed') {
-        stateChangedListeners.forEach(listener => {
-            try {
-                listener();
-            } catch (error) {
-                console.error('Error notifying listener:', error);
-            }
-        });
-    }
 }
 
 function subscribeToPlaybackStateChanged() {
@@ -97,7 +62,7 @@ function getState() {
     };
 }
 
-function canPlay(/** @type {Track} */ track) {
+function canPlay(track: Track) {
     if (typeof track !== 'string') {
         return false;
     }
@@ -109,7 +74,7 @@ function canPlay(/** @type {Track} */ track) {
     return true;
 }
 
-async function play(/** @type {Track} */ track, /** @type {number} */ position = 0) {
+async function play(track: Track, position: number = 0) {
     const decryptedBlob = await decryptTrack(track);
 
     if (decryptedTrackUrl) {
@@ -133,13 +98,13 @@ async function stop() {
     notifyListencer('state_changed');
 }
 
-async function setVolume(/** @type {number} */ volume) {
+async function setVolume(volume: number) {
     _state.volume = volume;
     await PlaybackFile.setVolume(volume);
     notifyListencer('state_changed');
 }
 
-async function getTrackDetails(/** @type {Track} */ track) {
+async function getTrackDetails(track: Track) {
     const decryptedBlob = await decryptTrack(track);
     const trackUrl = URL.createObjectURL(decryptedBlob);
 
@@ -150,7 +115,19 @@ async function getTrackDetails(/** @type {Track} */ track) {
     }
 }
 
-function addEventListener(/** @type {PlaybackEvent} */ event, listener) {
+function notifyListencer(event: PlaybackEvent) {
+    if (event === 'state_changed') {
+        stateChangedListeners.forEach(listener => {
+            try {
+                listener();
+            } catch (error) {
+                console.error('Error notifying listener:', error);
+            }
+        });
+    }
+}
+
+function addEventListener(event: PlaybackEvent, listener: PlaybackEventListener) {
     if (typeof listener !== 'function') {
         console.warn('Listener must be a function');
         return;
@@ -161,7 +138,7 @@ function addEventListener(/** @type {PlaybackEvent} */ event, listener) {
     }
 }
 
-function removeEventListener(/** @type {PlaybackEvent} */ event, listener) {
+function removeEventListener(event: PlaybackEvent, listener: PlaybackEventListener) {
     if (event === 'state_changed') {
         const index = stateChangedListeners.indexOf(listener);
         if (index !== -1) {
@@ -171,8 +148,7 @@ function removeEventListener(/** @type {PlaybackEvent} */ event, listener) {
 }
 
 
-/** @type {Playback} */
-const PlaybackEncryptedFile = {
+const PlaybackEncryptedFile: Playback = {
     getState,
     canPlay,
     play,

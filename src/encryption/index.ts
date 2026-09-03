@@ -1,6 +1,6 @@
 const IV_LENGTH = 12;
 
-async function encrypt(/** @type {Uint8Array<ArrayBuffer>} */ data, /** @type {string} */ encryptionKey) {
+async function encrypt(data: Uint8Array<ArrayBuffer>, encryptionKey: string) {
     const iv = crypto.getRandomValues(new Uint8Array(IV_LENGTH));
     const keyData = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(encryptionKey));
     const key = await crypto.subtle.importKey(
@@ -22,7 +22,7 @@ async function encrypt(/** @type {Uint8Array<ArrayBuffer>} */ data, /** @type {s
     return encryptedData;
 }
 
-async function decrypt(/** @type {Uint8Array<ArrayBuffer>} */ encryptedData, /** @type {string} */ encryptionKey) {
+async function decrypt(encryptedData: Uint8Array<ArrayBuffer>, encryptionKey: string) {
     const iv = encryptedData.slice(0, IV_LENGTH);
     const ciphertext = encryptedData.slice(IV_LENGTH);
     const keyData = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(encryptionKey));
