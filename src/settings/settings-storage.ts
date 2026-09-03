@@ -33,12 +33,14 @@ function getSettings(): Settings {
                 .map((entry) => ({
                     url: entry.url,
                     encryptionKey: entry.encryption_key ?? '',
-                    welcomeShownAt: entry.welcome_shown_at,
+                    welcomeShownAt: typeof entry.welcome_shown_at === 'number' 
+                        ? entry.welcome_shown_at 
+                        : undefined,
                 }))
                 .filter((entry) => 
                     typeof entry.url === 'string' && entry.url.length > 0
                     && typeof entry.encryptionKey === 'string'
-                    && ['number', 'undefined'].includes(entry.welcomeShownAt)
+                    && ['number', 'undefined'].includes(typeof entry.welcomeShownAt)
                 ),
         };
 
