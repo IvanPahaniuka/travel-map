@@ -158,9 +158,9 @@ async function addPlaylist(id: string, tracks: Track[]) {
 	}
 
 	// Check if playlist already exists
-	const existingStation = _state.playlists.find(s => s.id === id);
-	if (existingStation) {
-		console.warn(`Station with id "${id}" already exists`);
+	const existingPlaylist = _state.playlists.find(s => s.id === id);
+	if (existingPlaylist) {
+		console.warn(`Playlist with id "${id}" already exists`);
 		return;
 	}
 
@@ -204,7 +204,7 @@ async function removePlaylist(id: string) {
 
 	const index = _state.playlists.findIndex(s => s.id === id);
 	if (index === -1) {
-		console.warn(`Station with id "${id}" not found`);
+		console.warn(`Playlist with id "${id}" not found`);
 		return;
 	}
 
@@ -324,7 +324,7 @@ async function changePlaylist(id: string) {
 
 		const playlist = _state.playlists.find(s => s.id === id);
 		if (!playlist) {
-			console.warn(`Station with id "${id}" not found`);
+			console.warn(`Playlist with id "${id}" not found`);
 			return;
 		}
 

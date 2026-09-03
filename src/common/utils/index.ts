@@ -1,6 +1,6 @@
-import { useEffect, useState, Ref, RefCallback, useCallback } from 'react';
+import { useEffect, useState, Ref, useCallback, useRef, useLayoutEffect } from 'react';
 
-type FetchState<T> = {
+export type FetchState<T> = {
     data: T | null;
     loading: boolean;
     error: string | null;
@@ -37,65 +37,196 @@ function useFetch<T>(url: string, parse: (response: Response) => Promise<T>) {
         })();
 
     }, [url]);
-    
+
     return state;
 }
 
-function useMergedRef<T>(...refs: (Ref<T> | undefined)[]): RefCallback<T> {
-    return useCallback((current: T | null) => {
-        const cleanups: [number, () => void][] = [];
 
-        refs.forEach((ref, index) => {
-            if (typeof ref === 'function') {
-                const cleanup = ref(current);
-                if (typeof cleanup === 'function') {
-                    cleanups.push([index, cleanup]);
-                }
-            } else if (typeof ref === 'object' && ref !== null) {
-                ref.current = current;
-            }
-        });
+function setRef<T>(ref: Ref<T> | undefined, current: T | null): (() => void) {
+    if (typeof ref === 'function') {
+        return ref(current) ?? (() => { ref(null); });
+    } else if (typeof ref === 'object' && ref !== null) {
+        ref.current = current;
+        return () => { ref.current = null; };
+    }
 
-        if (cleanups.length === 0) {
+    return () => { };
+}
+
+type AttachedRef<T> = {
+    ref: React.Ref<T>;
+    cleanup: () => void;
+};
+
+function useMergedRef<T>(
+    ...refs: (React.Ref<T> | undefined)[]
+): React.RefCallback<T> {
+    const stateRef = useRef<{
+        value: T | null;
+        refs: AttachedRef<T>[];
+    }>({
+        value: null,
+        refs: [],
+    });
+
+    // This is updated only after a render has committed.
+    const refsRef = useRef<React.Ref<T>[]>(null);
+    if (refsRef.current === null) {
+        refsRef.current = uniqueRefs(refs);
+    }
+
+    useLayoutEffect(() => {
+        const state = stateRef.current;
+        const nextRefs = uniqueRefs(refs);
+
+        refsRef.current = nextRefs;
+
+        // Nothing is attached yet.
+        if (state.value === null) {
             return;
         }
 
+        const previousRefs = state.refs;
+        const nextSet = new Set(nextRefs);
+
+        // 1. Detach refs that disappeared.
+        // Iterating previousRefs preserves the previous ref order.
+        for (const attached of previousRefs) {
+            if (!nextSet.has(attached.ref)) {
+                attached.cleanup();
+            }
+        }
+
+        // 2. Keep existing refs and attach new refs.
+        // Iterating nextRefs preserves the new ref order.
+        const previousMap = new Map(
+            previousRefs.map((attached) => [attached.ref, attached]),
+        );
+
+        const nextAttached: AttachedRef<T>[] = [];
+
+        for (const ref of nextRefs) {
+            const existing = previousMap.get(ref);
+
+            if (existing) {
+                // Same ref: leave it attached.
+                nextAttached.push(existing);
+            } else {
+                // New ref: attach it.
+                nextAttached.push({
+                    ref,
+                    cleanup: setRef(ref, state.value),
+                });
+            }
+        }
+
+        state.refs = nextAttached;
+    });
+
+    const mergedRef = useCallback<React.RefCallback<T>>((value) => {
+        const state = stateRef.current;
+
+        state.value = value;
+
+        if (value === null) {
+            for (const attached of state.refs) {
+                attached.cleanup();
+            }
+
+            state.refs = [];
+            return () => {};
+        }
+
+        // Initial attachment.
+        state.refs = refsRef.current!.map((ref) => ({
+            ref,
+            cleanup: setRef(ref, value),
+        }));
+
         return () => {
-            let cleanupIndex = 0;
-            refs.forEach((ref, index) => {
-                if (cleanups[cleanupIndex]?.[0] === index) {
-                    cleanups[cleanupIndex][1]();
-                    cleanupIndex++;
-                } else if (typeof ref === 'function') {
-                    ref(null);
-                } else if (typeof ref === 'object' && ref !== null) {
-                    ref.current = null;
-                }
-            });
+            const refs = state.refs;
+            state.refs = [];
+            state.value = null;
+
+            for (const attached of refs) {
+                attached.cleanup();
+            }
         };
-    }, refs);
+    }, []);
+
+    return mergedRef;
+
+    function uniqueRefs<T>(
+        refs: (React.Ref<T> | undefined)[],
+    ): React.Ref<T>[] {
+        const result: React.Ref<T>[] = [];
+        refs.forEach(ref => {
+            if (ref !== null && ref !== undefined && !result.includes(ref)) {
+                result.push(ref);
+            }
+        });
+        return result;
+    }
 }
 
-function setRef<T>(ref: Ref<T> | undefined, current: T | null) {
-    if (typeof ref === 'function') {
-        ref(current);
-    } else if (typeof ref === 'object' && ref !== null) {
-        ref.current = current;
-    }
+function useRefModifier<T>(
+    ref: React.Ref<T> | undefined,
+): [setRef: (value: T) => void, cleanupRef: () => void] {
+    const refRef = useRef<React.Ref<T> | undefined>(ref);
+    const valueRef = useRef<T | null>(null);
+    const cleanupRefRef = useRef<(() => void) | null>(null);
+
+    const setRefValue = useRef((value: T) => {
+        cleanupRefRef.current?.();
+        valueRef.current = value;
+        cleanupRefRef.current = setRef(refRef.current, value);
+    }).current;
+
+    const cleanupRef = useRef(() => {
+        cleanupRefRef.current?.();
+        cleanupRefRef.current = null;
+        valueRef.current = null;
+    }).current;
+
+    useLayoutEffect(() => {
+        if (refRef.current === ref) {
+            return;
+        }
+
+        const value = valueRef.current;
+
+        refRef.current = ref;
+
+        // Attach existing value to new ref.
+        if (value !== null) {
+            setRefValue(value);
+        }
+
+        return () => {
+            // Detach from old ref.
+            cleanupRefRef.current?.();
+            cleanupRefRef.current = null;
+        };
+    }, [ref]);
+
+    return [
+        setRefValue,
+        cleanupRef,
+    ];
 }
 
 const promisesByKey: Record<string, Promise<any> | null> = {};
 function createWaitingExecutor<A extends unknown[], R>(key: string, func: (...args: A) => Promise<R>): (...args: A) => Promise<R> {
-	return (waitAndExecute as typeof waitAndExecute<A, R>).bind(null, key, func);
+    return (waitAndExecute as typeof waitAndExecute<A, R>).bind(null, key, func);
 }
 function createSkippingExecutor<A extends unknown[], R>(key: string, func: (...args: A) => Promise<R>): (...args: A) => Promise<R | undefined> {
-	return (skipOrExecute as typeof skipOrExecute<A, R>).bind(null, key, func);
+    return (skipOrExecute as typeof skipOrExecute<A, R>).bind(null, key, func);
 }
 async function waitAndExecute<A extends unknown[], R>(key: string, func: (...args: A) => Promise<R>, ...args: A): Promise<R> {
     while (promisesByKey[key]) {
         try {
             await promisesByKey[key];
-        } catch {}
+        } catch { }
     }
 
     return promisesByKey[key] = func(...args).finally(() => { promisesByKey[key] = null; });
@@ -111,12 +242,11 @@ async function skipOrExecute<A extends unknown[], R>(key: string, func: (...args
 const Utils = {
     useFetch,
     useMergedRef,
-    setRef,
+    useRefModifier,
     createWaitingExecutor,
     createSkippingExecutor,
     waitAndExecute,
     skipOrExecute,
-}
-
+};
 
 export default Utils;
