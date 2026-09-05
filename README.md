@@ -1,27 +1,74 @@
-# Travel Memory Map
+# Travel Map
 
-A personal map of visited places with rich galleries, music, and memories attached to each location. A simple, travel memory map built with Leaflet, OpenStreetMap, HTML, CSS, and JavaScript.
+Interactive travel journal built with React, TypeScript, and Leaflet. Each place can include a location, date, gallery, and tracks.
+
+## Data
+
+The app reads travel data from the configured URL in settings. Default is `./data/data.json`.
+
+You can create the `data.json` file and the gallery on any file storage service that lets you share files, such as Cloudflare R2 or similar providers, and either supports CORS configuration or does not enforce it.
+
+Example:
+
+```json
+{
+  "welcome": {
+    "title": { "default": "Travel Map" },
+    "message": { "default": "Explore travels around the world." }
+  },
+  "places": [
+    {
+      "id": "paris-2023",
+      "date": "2023-05-01",
+      "title": { "default": "Paris, France" },
+      "latitude": 48.8553,
+      "longitude": 2.3451,
+      "tracks": ["spotify:track:..."],
+      "gallery": ["./paris-2023/image.jpg", "./paris-2023/video.mp4"]
+    }
+  ]
+}
+```
 
 ## Features
 
-- Full-screen interactive map
-- Markers for every saved travel location
-- Popup cards with title, date, gallery, song
+- Full-screen map and markers
+- Photo/video gallery per place
+- Spotify/file track playback
+- Optional encrypted data support
+- Settings for data URL and encryption key
+- Sharing your settings with others
+- Localized titles/messages support
 
-## Local preview
+## Spotify
 
-Open [index.html](index.html) in a browser, or serve the folder with a simple static server.
+If you plan to use Spotify playback, create your own Spotify app in the Spotify Developer Dashboard and replace the client ID in the Spotify module with your app's client ID.
 
-## GitHub Pages deployment
+## Deploy and run
 
-The GitHub Actions workflow deploys automatically after every push to the
-`main` branch.
+This is a static React app. Run `npm run build` and publish the generated output to any static host.
 
-1. Push this project to a GitHub repository.
-2. In **Settings > Pages**, set **Source** to **GitHub Actions**.
-3. Push to `main`, or run **Deploy to GitHub Pages** manually from the repository's **Actions** tab.
-4. GitHub will publish the URL shown on the workflow run and in the `github-pages` environment.
+### Build
 
-## Notes
+```bash
+npm run build
+```
 
-- All places and their galleries are stored in the data folder. To configure an existing place or add a new one, modify the data.json file.
+### Run locally
+
+```bash
+npm install
+npm start
+```
+
+Then open the local URL from webpack-dev-server.
+
+### GitHub Pages
+
+1. Push the project to GitHub.
+2. In the repository settings, open **Pages**.
+3. Set the source to **GitHub Actions**.
+4. Push to the main branch and wait for the workflow to finish.
+5. Use the published URL from the GitHub Pages settings or Actions output.
+
+This project is ready to be published as a GitHub Pages site without changing the app code.
