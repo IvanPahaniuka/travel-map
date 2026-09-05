@@ -12,7 +12,37 @@ export type Settings = {
     data: SettingsDataEntry[];
 }
 
+
+function applySharedSettingsFromQuery() {
+    const params = new URLSearchParams(window.location.search);
+
+    const dataUrls = params.getAll('data_urls');
+    const encryptionKeys = params.getAll('encryption_keys');
+
+    if (dataUrls.length === 0) {
+        return;
+    }
+
+    SettingsStorage.setSettings({
+        data: [{
+            url: dataUrls[0],
+            encryptionKey: encryptionKeys[0] ?? '',
+        }]
+    });
+
+    params.delete('data_urls');
+    params.delete('encryption_keys');
+
+    const queryString = params.toString();
+    const url = new URL(window.location.href);
+    url.search = queryString;
+    window.history.replaceState({}, '', url);
+}
+
+
 function getSettings(): Settings {
+    applySharedSettingsFromQuery();
+
     const defaultValue: Settings = { data: [{ url: './data/data.json', encryptionKey: '' }] };
 
     const rawValue = localStorage.getItem(SETTINGS_KEY);
@@ -33,11 +63,11 @@ function getSettings(): Settings {
                 .map((entry) => ({
                     url: entry.url,
                     encryptionKey: entry.encryption_key ?? '',
-                    welcomeShownAt: typeof entry.welcome_shown_at === 'number' 
-                        ? entry.welcome_shown_at 
+                    welcomeShownAt: typeof entry.welcome_shown_at === 'number'
+                        ? entry.welcome_shown_at
                         : undefined,
                 }))
-                .filter((entry) => 
+                .filter((entry) =>
                     typeof entry.url === 'string' && entry.url.length > 0
                     && typeof entry.encryptionKey === 'string'
                     && ['number', 'undefined'].includes(typeof entry.welcomeShownAt)
