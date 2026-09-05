@@ -189,33 +189,36 @@ function parseAuthorizationResponse() {
 	};
 }
 
-async function getAccessToken() {
-	const maxStaleTimeOnError = 5 * 24 * 60 * 60 * 1000;
-	const accessTokenRefreshInterval = 5 * 60 * 1000;
+let getAccessTokenPromise: Promise<string | undefined> | null = null; 
+function getAccessToken(): Promise<string | undefined> {
+	return getAccessTokenPromise ??= (async () => {
+		const maxStaleTimeOnError = 5 * 24 * 60 * 60 * 1000;
+		const accessTokenRefreshInterval = 5 * 60 * 1000;
 
-	const [accessToken, updatedAt] = SpotifyAuthStorage.getAccessToken();
-	if (!accessToken || (updatedAt + accessTokenRefreshInterval < Date.now())) {
-		try {
-			await refreshSpotifyAccessToken();
-			const [newAccessToken] = SpotifyAuthStorage.getAccessToken();
-			return newAccessToken;
-		} catch (error) {
-			console.warn('Unable to refresh Spotify access token:', error);
-
-			if (typeof error === 'object' && error !== null
-				&& ('code' in error && error.code === 'invalid_grant' || (Date.now() - updatedAt > maxStaleTimeOnError))
-			) {
-				SpotifyAuthStorage.clearAccessToken();
-				SpotifyAuthStorage.clearRefreshToken();
-			} else if (accessToken) {
-				return accessToken;
+		const [accessToken, updatedAt] = SpotifyAuthStorage.getAccessToken();
+		if (!accessToken || (updatedAt + accessTokenRefreshInterval < Date.now())) {
+			try {
+				await refreshSpotifyAccessToken();
+				const [newAccessToken] = SpotifyAuthStorage.getAccessToken();
+				return newAccessToken;
+			} catch (error) {
+				if (typeof error === 'object' && error !== null
+					&& ('code' in error && error.code === 'invalid_grant' || (Date.now() - updatedAt > maxStaleTimeOnError))
+				) {
+					SpotifyAuthStorage.clearAccessToken();
+					SpotifyAuthStorage.clearRefreshToken();
+					return undefined;
+				} else if (accessToken) {
+					return accessToken;
+				} else {
+					console.warn('Unable to refresh Spotify access token:', error);
+					return undefined;
+				}
 			}
-
-			return undefined;
 		}
-	}
 
-	return accessToken;
+		return accessToken;
+	})().finally(() => { getAccessTokenPromise = null; });
 }
 
 async function init() {

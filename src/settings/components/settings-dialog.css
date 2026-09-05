@@ -64,3 +64,7 @@ dialog .settings-dialog-content .button.settings-spotify-button {
 dialog .settings-dialog-content .button.settings-spotify-button:hover {
 	background: #14883c;
 }
+
+dialog .settings-spotify-button .loader {
+    width: 1rem;
+}

@@ -8,6 +8,7 @@ import { ShareButton } from './share-button';
 import SettingsStorage from './settings/settings-storage';
 import Player from './player';
 import Utils from './common/utils';
+import { SettingsButton } from './settings/components/settings-button';
 
 async function updatePlaylists(places: TravelPlace[] | null | undefined) {
 	places ??= [];
@@ -66,6 +67,7 @@ const App: FC = () => {
   return (
     <div className="travel-map-shell">
       <TravelMap travelData={data} />
+      <SettingsButton />
       <ShareButton />
       <PlayerWidget />
       <SpotifyAuthDialog />

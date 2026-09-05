@@ -1,0 +1,15 @@
+.loader {
+    width: 2rem;
+    aspect-ratio: 1;
+    border: 0.2rem solid #00000000;
+    border-top-color: currentColor;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    user-select: none;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}

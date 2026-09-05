@@ -2,13 +2,13 @@ import SpotifyAuthStorage from "../spotify/spotify-auth-storage";
 
 const SETTINGS_KEY = 'settings';
 
-type SettingsDataEntry = {
+export type SettingsDataEntry = {
     url: string;
     encryptionKey: string;
     welcomeShownAt?: number;
 }
 
-type Settings = {
+export type Settings = {
     data: SettingsDataEntry[];
 }
 

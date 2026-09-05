@@ -194,9 +194,12 @@ async function play(trackUri: string, position: number = 0) {
   console.info(`Playing Spotify track: ${trackUri}`);
 }
 
-async function isAuthorized() {
-  const accessToken = await SpotifyAuth.getAccessToken();
-  return typeof accessToken === 'string' && accessToken !== '';
+let isAuthorizedPromise: Promise<boolean> | null = null;
+function isAuthorized(): Promise<boolean> {
+  return isAuthorizedPromise ??= (async () => {
+    const accessToken = await SpotifyAuth.getAccessToken();
+    return typeof accessToken === 'string' && accessToken !== '';
+  })().finally(() => { isAuthorizedPromise = null; });
 }
 
 async function init() {

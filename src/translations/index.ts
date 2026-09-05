@@ -11,6 +11,8 @@ const standardTranslations = {
 		'spotify-auth-dialog-button-close': 'Skip for now',
 
 		'settings-dialog-title': 'Settings',
+		'settings-dialog-data-url-label': 'Data URL',
+		'settings-dialog-encryption-key-label': 'Encryption Key',
 		'settings-spotify-button-authorize': 'Log in',
 		'settings-spotify-button-logout': 'Log out',
 
@@ -26,6 +28,8 @@ const standardTranslations = {
 		'spotify-auth-dialog-button-close': 'Omitir por ahora',
 
 		'settings-dialog-title': 'Configuración',
+		'settings-dialog-data-url-label': 'URL de datos',
+		'settings-dialog-encryption-key-label': 'Clave de cifrado',
 		'settings-spotify-button-authorize': 'Iniciar sesión',
 		'settings-spotify-button-logout': 'Cerrar sesión',
 
@@ -41,6 +45,8 @@ const standardTranslations = {
 		'spotify-auth-dialog-button-close': 'Salta per ora',
 
 		'settings-dialog-title': 'Impostazioni',
+		'settings-dialog-data-url-label': 'URL dei dati',
+		'settings-dialog-encryption-key-label': 'Chiave di crittografia',
 		'settings-spotify-button-authorize': 'Accedi',
 		'settings-spotify-button-logout': 'Esci',
 
@@ -56,6 +62,8 @@ const standardTranslations = {
 		'spotify-auth-dialog-button-close': 'Пропустить',
 
 		'settings-dialog-title': 'Настройки',
+		'settings-dialog-data-url-label': 'URL данных',
+		'settings-dialog-encryption-key-label': 'Ключ шифрования',
 		'settings-spotify-button-authorize': 'Войти',
 		'settings-spotify-button-logout': 'Выйти',
 
