@@ -14,10 +14,13 @@ Open [index.html](index.html) in a browser, or serve the folder with a simple st
 
 ## GitHub Pages deployment
 
+The GitHub Actions workflow deploys automatically after every push to the
+`main-react-ts` branch.
+
 1. Push this project to a GitHub repository.
-2. In the repository settings, enable GitHub Pages.
-3. Choose the main branch and the root folder `/`.
-4. Your site will be published at `https://<your-username>.github.io/<repository-name>/`.
+2. In **Settings > Pages**, set **Source** to **GitHub Actions**.
+3. Push to `main-react-ts`, or run **Deploy to GitHub Pages** manually from the repository's **Actions** tab.
+4. GitHub will publish the URL shown on the workflow run and in the `github-pages` environment.
 
 ## Notes
 
