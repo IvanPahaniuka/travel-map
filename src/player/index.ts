@@ -1,6 +1,12 @@
 import Utils, { Event, EventListener } from '../common/utils';
 import Playbacks, { Playback, PlaybackState, Track } from './playbacks';
 
+export type PlayerEvents = {
+	'state_changed': [],	
+};
+export type PlayerEvent = Event<PlayerEvents>;
+export type PlayerEventListener<TEvent extends PlayerEvent = PlayerEvent> = EventListener<PlayerEvents, TEvent>;
+
 export type TrackState = {
 	index: number;
 	position: number;
@@ -10,28 +16,14 @@ export type TrackState = {
 	updatedAt: number;
 }
 
-type InternalPlaylist = {
-	id: string;
-	tracks: Track[];
-	trackPlaybacks: (Playback | null)[];
-	currentTrackState: TrackState | null;
+export type TrackData = {
+	track: Track;
+	canPlay: boolean;
 }
-
-type InternalState = {
-	volume: number;
-	playlists: InternalPlaylist[];
-	currentPlaylist: InternalPlaylist | null;
-}
-
-export type PlayerEvents = {
-	'state_changed': [],	
-};
-export type PlayerEvent = Event<PlayerEvents>;
-export type PlayerEventListener<TEvent extends PlayerEvent = PlayerEvent> = EventListener<PlayerEvents, TEvent>;
 
 export type Playlist = {
 	id: string;
-	tracks: Track[];
+	tracks: TrackData[];
 	currentTrackState: TrackState | null;
 }
 
@@ -41,6 +33,22 @@ export type PlayerState = {
 	currentPlaylist: Playlist | null;
 }
 
+type InternalTrackData = {
+	track: Track;
+	playback: Playback | null;
+}
+
+type InternalPlaylist = {
+	id: string;
+	tracks: InternalTrackData[];
+	currentTrackState: TrackState | null;
+}
+
+type InternalState = {
+	volume: number;
+	playlists: InternalPlaylist[];
+	currentPlaylist: InternalPlaylist | null;
+}
 
 const _state: InternalState = {
 	volume: 0,
@@ -51,7 +59,10 @@ const _state: InternalState = {
 function getState(): PlayerState {
 	const playlistsMapped = _state.playlists.map(p => ({
 		id: p.id,
-		tracks: [...p.tracks],
+		tracks: p.tracks.map(t => ({
+			track: t,
+			canPlay: t.playback !== null,
+		})),
 		currentTrackState: p.currentTrackState && { ...p.currentTrackState },
 	}));
 
@@ -80,9 +91,7 @@ function getRandomInt(min: number, max: number) {
 function getPossibleTrackIndexes(playlist: InternalPlaylist) {
 	
 	const possibleTrackIndexes = playlist.tracks.map((_, i) => i).filter(
-		(index) => 
-			playlist.tracks[index]
-			&& playlist.trackPlaybacks[index]
+		(index) => playlist.tracks[index].playback 
 	);
 
 	return possibleTrackIndexes;
@@ -98,8 +107,8 @@ async function onPlaybackStateChanged(playback: Playback) {
 	}
 
 	const trackIndex = trackState.index;
-	const track = playlist.tracks[trackIndex];
-	const trackPlayback = playlist.trackPlaybacks[trackIndex];
+	const track = playlist.tracks[trackIndex].track;
+	const trackPlayback = playlist.tracks[trackIndex].playback;
 
 	if (trackPlayback !== playback) {
 		return;
@@ -167,28 +176,32 @@ async function addPlaylist(id: string, tracks: Track[]) {
 		return;
 	}
 
-	const trackPlaybacks = tracks.map(track => {
+	const trackDataArray: InternalTrackData[] = []; 
+	
+	for (const track of tracks) {
+		let trackPlayback: Playback | null = null;
+
 		for (const playback of Playbacks) {
 			let canPlay = false;
 			try {
-				canPlay = playback.canPlay(track)
+				canPlay = await playback.canPlay(track)
 			} catch (error) {
 				console.error(error);
 			}
 			
 			if (canPlay) {
 				subscribeToPlaybackStateChanged(playback);
-				return playback;
+				trackPlayback = playback;
+				break;
 			}
 		}
 
-		return null;
-	});
+		trackDataArray.push({ track, playback: trackPlayback });
+	}
 
 	const playlist: InternalPlaylist = {
 		id,
-		tracks,
-		trackPlaybacks,
+		tracks: trackDataArray,
 		currentTrackState: null,
 	};
 
@@ -230,8 +243,8 @@ async function changePlaylist(id: string) {
 		}
 		
 		const trackIndex = trackState.index;
-		const track = playlist.tracks[trackIndex];
-		const trackPlayback = playlist.trackPlaybacks[trackIndex];
+		const track = playlist.tracks[trackIndex].track;
+		const trackPlayback = playlist.tracks[trackIndex].playback;
 
 		if (!trackPlayback) {
 			return false;
@@ -280,8 +293,8 @@ async function changePlaylist(id: string) {
 		
 		const trackIndex = possibleTrackIndexes[getRandomInt(0, possibleTrackIndexes.length)];
 
-		const track = playlist.tracks[trackIndex];
-		const trackPlayback = playlist.trackPlaybacks[trackIndex]!;
+		const track = playlist.tracks[trackIndex].track;
+		const trackPlayback = playlist.tracks[trackIndex].playback!;
 
 		let trackDetails;
 		try {
@@ -354,7 +367,7 @@ async function setVolume(volume: number) {
 	
 	if (currentPlaylist && currentTrackState) {
 		const trackIndex = currentTrackState.index;
-		const playback = currentPlaylist.trackPlaybacks[trackIndex]!;
+		const playback = currentPlaylist.tracks[trackIndex].playback!;
 
 		try {
 			await playback.setVolume(volume);
@@ -390,8 +403,8 @@ async function next() {
 
 	const trackIndex = possibleTrackIndexes[getRandomInt(0, possibleTrackIndexes.length)];
 
-	const track = playlist.tracks[trackIndex];
-	const trackPlayback = playlist.trackPlaybacks[trackIndex]!;
+	const track = playlist.tracks[trackIndex].track;
+	const trackPlayback = playlist.tracks[trackIndex].playback!;
 
 	let trackDetails;
 	try {
@@ -433,7 +446,7 @@ async function stop() {
 	}
 
 	const trackIndex = currentTrackState.index;
-	const trackPlayback = trackPlaylist.trackPlaybacks[trackIndex]!;
+	const trackPlayback = trackPlaylist.tracks[trackIndex].playback!;
 
 	_state.currentPlaylist = null;
 

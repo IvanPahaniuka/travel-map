@@ -62,7 +62,7 @@ function getState() {
     };
 }
 
-function canPlay(track: Track) {
+async function canPlay(track: Track) {
     if (typeof track !== 'string') {
         return false;
     }

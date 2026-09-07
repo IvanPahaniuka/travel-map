@@ -182,12 +182,21 @@ async function updateCurrentPlaylist(map: L.Map | null | undefined, places: Trav
   const mapCenter = map.getCenter();
   const mapCenterPoint = map.latLngToContainerPoint(mapCenter);
 
-  places.forEach((place) => {
+  const placesPlaylists = places.map(place => ({
+    place,
+    playlist: playerState.playlists.find(p => p.id === place.id) ?? null,
+  }));
+
+  placesPlaylists.forEach(({ place, playlist }) => {
     const placePoint = map.latLngToContainerPoint(L.latLng(place.latitude, place.longitude));
     const pixelDistance = Math.hypot(placePoint.x - mapCenterPoint.x, placePoint.y - mapCenterPoint.y);
 
     if (place.id === playerPlaylistId) {
       lastCenteredDistance = pixelDistance;
+    }
+
+    if (!playlist || playlist.tracks.length === 0 || playlist.tracks.every(t => t.canPlay === false)) {
+      return;
     }
 
     if (pixelDistance < centeredDistance) {
@@ -196,9 +205,8 @@ async function updateCurrentPlaylist(map: L.Map | null | undefined, places: Trav
     }
   });
 
-  const centeredTracks = Array.isArray(centeredPlace?.tracks) ? centeredPlace.tracks : [];
 
-  if (centeredPlace !== null && centeredTracks.length > 0 && centeredPlace.id !== playerPlaylistId) {
+  if (centeredPlace !== null && centeredPlace.id !== playerPlaylistId) {
     const canChangePlaylist = centeredDistance <= (playerPlaylistId === null ? playTrackRadiusPixels : switchTrackRadiusPixels);
     if (canChangePlaylist) {
       await Player.changePlaylist(centeredPlace.id);

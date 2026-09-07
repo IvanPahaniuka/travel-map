@@ -30,13 +30,13 @@ export type PlaybackEventListener<TEvent extends PlaybackEvent = PlaybackEvent> 
 
 export type Playback = {
     getState: () => PlaybackState;
-    canPlay: (track: Track) => boolean;
+    canPlay: (track: Track) => Promise<boolean>;
     play: (track: Track, position: number) => Promise<void>;
     stop: () => Promise<void>;
     setVolume: (volume: number) => Promise<void>;
     getTrackDetails: (track: Track) => Promise<TrackDetails>;
-    addEventListener: <Event extends PlaybackEvent>(event: Event, listener: PlaybackEventListener<Event>) => void;
-    removeEventListener: <Event extends PlaybackEvent>(event: Event, listener: PlaybackEventListener<Event>) => void;
+    addEventListener: <TEvent extends PlaybackEvent>(event: TEvent, listener: PlaybackEventListener<TEvent>) => void;
+    removeEventListener: <TEvent extends PlaybackEvent>(event: TEvent, listener: PlaybackEventListener<TEvent>) => void;
 }
 
 const Playbacks: Playback[] = [

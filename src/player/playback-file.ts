@@ -1,5 +1,5 @@
 import * as musicMetadata from 'music-metadata';
-import { PlaybackEvent, PlaybackEventListener, PlaybackEvents, PlaybackTrackState, Track, TrackDetails } from './playbacks';
+import { Playback, PlaybackEvent, PlaybackEventListener, PlaybackEvents, PlaybackTrackState, Track, TrackDetails } from './playbacks';
 import Utils from '../common/utils';
 
 type InternalState = {
@@ -37,7 +37,7 @@ function getState() {
     };
 }
 
-function canPlay(track: Track) {
+async function canPlay(track: Track) {
     const schemePrefixes = ['https:', 'http:', 'file:', 'blob:', 'data:'];
 
     if (typeof track !== 'string') {
@@ -120,9 +120,7 @@ const notifyEventListeners = playbackEventBus.notifyEventListeners;
 const addEventListener = playbackEventBus.addEventListener;
 const removeEventListener = playbackEventBus.removeEventListener;
 
-
-/** @type {Playback} */
-const PlaybackFile = {
+const PlaybackFile: Playback = {
     getState,
     canPlay,
     play,

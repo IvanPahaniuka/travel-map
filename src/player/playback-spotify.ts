@@ -62,12 +62,17 @@ function getState(): PlaybackState {
     };
 }
 
-function canPlay(track: Track) {
+async function canPlay(track: Track) {
     if (typeof track !== 'string') {
         return false;
     }
 
     if (!track.startsWith('spotify:track:')) {
+        return false;
+    }
+
+    const isAuthorized = await Spotify.isAuthorized();
+    if (!isAuthorized) {
         return false;
     }
 
