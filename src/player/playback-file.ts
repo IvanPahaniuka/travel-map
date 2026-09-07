@@ -1,5 +1,6 @@
 import * as musicMetadata from 'music-metadata';
-import { PlaybackEvent, PlaybackEventListener, PlaybackTrackState, Track, TrackDetails } from './playbacks';
+import { PlaybackEvent, PlaybackEventListener, PlaybackEvents, PlaybackTrackState, Track, TrackDetails } from './playbacks';
+import Utils from '../common/utils';
 
 type InternalState = {
     volume: number;
@@ -11,14 +12,13 @@ const _state: InternalState = {
     currentTrackState: null,
 };
 
-const stateChangedListeners: PlaybackEventListener[] = [];
 const audio = new Audio();
 
 audio.addEventListener('timeupdate', () => {
     if (_state.currentTrackState) {
         _state.currentTrackState.position = audio.currentTime * 1000;
         _state.currentTrackState.updatedAt = Date.now();
-        notifyListencer('state_changed');
+        notifyEventListeners('state_changed');
     }
 });
 
@@ -26,7 +26,7 @@ audio.addEventListener('ended', () => {
     if (_state.currentTrackState) {
         _state.currentTrackState.position = Infinity;
         _state.currentTrackState.updatedAt = Date.now();
-        notifyListencer('state_changed');
+        notifyEventListeners('state_changed');
     }
 });
 
@@ -68,19 +68,19 @@ async function play(track: Track, position: number = 0) {
     };
 
     await audio.play();
-    notifyListencer('state_changed');
+    notifyEventListeners('state_changed');
 }
 
 async function stop() {
     audio.pause();
     _state.currentTrackState = null;
-    notifyListencer('state_changed');
+    notifyEventListeners('state_changed');
 }
 
 async function setVolume(volume: number) {
     _state.volume = volume;
     audio.volume = volume;
-    notifyListencer('state_changed');
+    notifyEventListeners('state_changed');
 }
 
 async function getTrackDetails(track: Track): Promise<TrackDetails> {
@@ -114,37 +114,11 @@ async function getTrackDetails(track: Track): Promise<TrackDetails> {
     return trackDetails;
 }
 
-function notifyListencer(event: PlaybackEvent) {
-    if (event === 'state_changed') {
-        stateChangedListeners.forEach(listener => {
-            try {
-                listener();
-            } catch (error) {
-                console.error('Error notifying listener:', error);
-            }
-        });
-    }
-}
 
-function addEventListener(event: PlaybackEvent, listener: PlaybackEventListener) {
-    if (typeof listener !== 'function') {
-        console.warn('Listener must be a function');
-        return;
-    }
-
-    if (event === 'state_changed') {
-        stateChangedListeners.push(listener);
-    }
-}
-
-function removeEventListener(event: PlaybackEvent, listener: PlaybackEventListener) {
-    if (event === 'state_changed') {
-        const index = stateChangedListeners.indexOf(listener);
-        if (index !== -1) {
-            stateChangedListeners.splice(index, 1);
-        }
-    }
-}
+const playbackEventBus = Utils.createEventBus<PlaybackEvents>();
+const notifyEventListeners = playbackEventBus.notifyEventListeners;
+const addEventListener = playbackEventBus.addEventListener;
+const removeEventListener = playbackEventBus.removeEventListener;
 
 
 /** @type {Playback} */

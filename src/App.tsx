@@ -12,7 +12,6 @@ import { SettingsButton } from './settings/components/settings-button';
 // TODO add share button to popup and add selected-place-id query parameter support
 // TODO Spotify playback. Return canPlay => false if Spotify is not authenticated
 // TODO remove settings input autofocus
-// TODO implement EventBus util
 // TODO add files patterns support for images (e.g. ./paris-2023/*.*) ???
 // TODO add files patterns support for tracks ???
 // TODO add multiple data sources support (data switch)

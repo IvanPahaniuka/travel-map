@@ -1,6 +1,7 @@
 import PlaybackSpotify from "./playback-spotify";
 import PlaybackEncryptedFile from "./playback-encrypted-file";
 import PlaybackFile from "./playback-file";
+import { Event, EventListener } from "../common/utils";
 
 export type Track = unknown;
 
@@ -21,8 +22,11 @@ export type PlaybackState = {
     currentTrackState: PlaybackTrackState | null;
 }
 
-export type PlaybackEvent = 'state_changed';
-export type PlaybackEventListener = () => void;
+export type PlaybackEvents = {
+    'state_changed': [],
+};
+export type PlaybackEvent = Event<PlaybackEvents>;
+export type PlaybackEventListener<TEvent extends PlaybackEvent = PlaybackEvent> = EventListener<PlaybackEvents, TEvent>;
 
 export type Playback = {
     getState: () => PlaybackState;
@@ -31,8 +35,8 @@ export type Playback = {
     stop: () => Promise<void>;
     setVolume: (volume: number) => Promise<void>;
     getTrackDetails: (track: Track) => Promise<TrackDetails>;
-    addEventListener: (event: PlaybackEvent, listener: PlaybackEventListener) => void;
-    removeEventListener: (event: PlaybackEvent, listener: PlaybackEventListener) => void;
+    addEventListener: <Event extends PlaybackEvent>(event: Event, listener: PlaybackEventListener<Event>) => void;
+    removeEventListener: <Event extends PlaybackEvent>(event: Event, listener: PlaybackEventListener<Event>) => void;
 }
 
 const Playbacks: Playback[] = [

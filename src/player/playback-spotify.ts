@@ -1,5 +1,6 @@
+import Utils from "../common/utils";
 import Spotify from "../spotify";
-import { Playback, PlaybackEvent, PlaybackEventListener, PlaybackState, PlaybackTrackState, Track, TrackDetails } from "./playbacks";
+import { Playback, PlaybackEvent, PlaybackEventListener, PlaybackEvents, PlaybackState, PlaybackTrackState, Track, TrackDetails } from "./playbacks";
 
 type InternalState = {
     volume: number;
@@ -11,7 +12,6 @@ const _state: InternalState = {
     currentTrackState: null,
 };
 
-const stateChangedListeners: PlaybackEventListener[] = [];
 let spotifyStateChangedListener: ((spotifyState: SpotifySdk.PlaybackState) => Promise<void>) | null = null;
 
 async function onSpotifyStateChanged(spotifyState: SpotifySdk.PlaybackState) {
@@ -33,13 +33,13 @@ async function onSpotifyStateChanged(spotifyState: SpotifySdk.PlaybackState) {
 
             trackState.position = Infinity;
             trackState.updatedAt = Date.now();
-            notifyListencer('state_changed');
+            notifyEventListeners('state_changed');
 
         } else if (timestamp && trackState.updatedAt < timestamp) {
 
             trackState.position = position;
             trackState.updatedAt = timestamp;
-            notifyListencer('state_changed');
+            notifyEventListeners('state_changed');
 
         }
 
@@ -89,19 +89,19 @@ async function play(track: Track, position: number = 0) {
 
     await Spotify.play(track, position);
 
-    notifyListencer('state_changed');
+    notifyEventListeners('state_changed');
 }
 
 async function stop() {
     _state.currentTrackState = null;
     await Spotify.pause();
-    notifyListencer('state_changed');
+    notifyEventListeners('state_changed');
 }
 
 async function setVolume(volume: number) {
     _state.volume = volume;
     await Spotify.setVolume(volume);
-    notifyListencer('state_changed');
+    notifyEventListeners('state_changed');
 }
 
 async function getTrackDetails(track: Track) {
@@ -136,38 +136,10 @@ async function getTrackDetails(track: Track) {
     return trackDetails;
 }
 
-function notifyListencer(event: PlaybackEvent) {
-	if (event === 'state_changed') {
-		stateChangedListeners.forEach(listener => {
-			try {
-				listener();
-			} catch (error) {
-				console.error('Error notifying listener:', error);
-			}
-		});
-	}
-}
-
-function addEventListener(event: PlaybackEvent, listener: PlaybackEventListener) {
-	if (typeof listener !== 'function') {
-		console.warn('Listener must be a function');
-		return;
-	}
-
-	if (event === 'state_changed') {
-		stateChangedListeners.push(listener);
-	}
-}
-
-function removeEventListener(event: PlaybackEvent, listener: PlaybackEventListener) {
-	if (event === 'state_changed') {
-		const index = stateChangedListeners.indexOf(listener);
-		if (index !== -1) {
-			stateChangedListeners.splice(index, 1);
-		}
-	}
-}
-
+const playbackEventBus = Utils.createEventBus<PlaybackEvents>();
+const notifyEventListeners = playbackEventBus.notifyEventListeners;
+const addEventListener = playbackEventBus.addEventListener;
+const removeEventListener = playbackEventBus.removeEventListener;
 
 const PlaybackSpotify: Playback = {
     getState,

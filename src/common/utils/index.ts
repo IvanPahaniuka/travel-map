@@ -1,12 +1,89 @@
 import { useEffect, useState, Ref, useCallback, useRef, useLayoutEffect } from 'react';
 
+export type Events = Record<string, unknown[]>;
+export type EventBus<TEvents extends Events> = {
+    addEventListener<TEvent extends keyof TEvents>(
+        event: TEvent,
+        listener: (...args: TEvents[TEvent]) => void,
+    ): void;
+    removeEventListener<TEvent extends keyof TEvents>(
+        event: TEvent,
+        listener: (...args: TEvents[TEvent]) => void,
+    ): void;
+    notifyEventListeners<TEvent extends keyof TEvents>(
+        event: TEvent,
+        ...args: TEvents[TEvent]
+    ): void;
+};
+export type Event<TEvents extends Events = Events> = keyof TEvents; 
+export type EventListener<TEvents extends Events = Events, TEvent extends Event<TEvents> = Event<TEvents>> = (...args: TEvents[TEvent]) => void;
+
+export function createEventBus<TEvents extends Events>(): EventBus<TEvents> {
+    const listenersByEvent = new Map<Event<TEvents>, EventListener<TEvents>[]>();
+    const notifyingListenersByEvent = new Map<Event<TEvents>, EventListener<TEvents>[]>();
+
+    function addEventListener<TEvent extends Event<TEvents>>(
+        event: TEvent,
+        listener: EventListener<TEvents, TEvent>,
+    ) {
+        let listeners = listenersByEvent.get(event) ?? [];
+        if (notifyingListenersByEvent.get(event) === listeners) {
+            listeners = [...listeners];
+            listenersByEvent.set(event, listeners);
+        }
+
+        listeners.push(listener as EventListener<TEvents>);
+        listenersByEvent.set(event, listeners);
+    }
+
+    function removeEventListener<TEvent extends Event<TEvents>>(
+        event: TEvent,
+        listener: EventListener<TEvents, TEvent>,
+    ) {
+        let listeners = listenersByEvent.get(event);
+        if (!listeners) {
+            return;
+        }
+
+        const index = listeners.indexOf(listener as EventListener<TEvents>);
+        if (index !== -1) {
+            if (notifyingListenersByEvent.get(event) === listeners) {
+                listeners = [...listeners];
+                listenersByEvent.set(event, listeners);
+            }
+
+            listeners.splice(index, 1);
+        }
+    }
+
+    function notifyEventListeners<TEvent extends Event<TEvents>>(event: TEvent, ...args: TEvents[TEvent]) {
+        const listeners = listenersByEvent.get(event);
+        if (!listeners) {
+            return;
+        }
+
+        notifyingListenersByEvent.set(event, listeners);
+        try {
+            listeners.forEach(listener => listener(...args));
+        } finally {
+            notifyingListenersByEvent.delete(event);
+        }
+    }
+
+    return {
+        addEventListener,
+        removeEventListener,
+        notifyEventListeners,
+    };
+}
+
 export type FetchState<T> = {
     data: T | null;
     loading: boolean;
     error: string | null;
 };
 
-function useFetch<T>(url: string, parse: (response: Response) => Promise<T>) {
+function useFetch<T>(url: string, parse: (response: Response) => Promise<T>): FetchState<T> {
     const [state, setState] = useState<FetchState<T>>({
         data: null,
         loading: true,
@@ -240,6 +317,7 @@ async function skipOrExecute<A extends unknown[], R>(key: string, func: (...args
 }
 
 const Utils = {
+    createEventBus,
     useFetch,
     useMergedRef,
     useRefModifier,

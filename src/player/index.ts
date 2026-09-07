@@ -1,4 +1,4 @@
-import Utils from '../common/utils';
+import Utils, { Event, EventListener } from '../common/utils';
 import Playbacks, { Playback, PlaybackState, Track } from './playbacks';
 
 export type TrackState = {
@@ -23,8 +23,11 @@ type InternalState = {
 	currentPlaylist: InternalPlaylist | null;
 }
 
-export type PlayerEvent = 'state_changed';
-export type PlayerEventListener = () => void;
+export type PlayerEvents = {
+	'state_changed': [],	
+};
+export type PlayerEvent = Event<PlayerEvents>;
+export type PlayerEventListener<TEvent extends PlayerEvent = PlayerEvent> = EventListener<PlayerEvents, TEvent>;
 
 export type Playlist = {
 	id: string;
@@ -121,7 +124,7 @@ async function onPlaybackStateChanged(playback: Playback) {
 			} else if (updatedAtNew && trackState.updatedAt < updatedAtNew) {
 				trackState.position = positionNew;
 				trackState.updatedAt = updatedAtNew;
-				notifyListenersDeferred('state_changed');
+				notifyEventListenersDeferred('state_changed');
 			}
 		}
 	}
@@ -191,7 +194,7 @@ async function addPlaylist(id: string, tracks: Track[]) {
 
 	_state.playlists.push(playlist);
 
-	notifyListenersDeferred('state_changed');
+	notifyEventListenersDeferred('state_changed');
 }
 
 /**
@@ -210,7 +213,7 @@ async function removePlaylist(id: string) {
 
 	_state.playlists.splice(index, 1);
 
-	notifyListenersDeferred('state_changed');
+	notifyEventListenersDeferred('state_changed');
 }
 
 /**
@@ -337,7 +340,7 @@ async function changePlaylist(id: string) {
 
 	}
 
-	notifyListenersDeferred('state_changed');
+	notifyEventListenersDeferred('state_changed');
 }
 
 /**
@@ -360,7 +363,7 @@ async function setVolume(volume: number) {
 		}
 	}
 
-	notifyListenersDeferred('state_changed');
+	notifyEventListenersDeferred('state_changed');
 }
 
 /**
@@ -414,7 +417,7 @@ async function next() {
 		console.error(error);
 	}
 
-	notifyListenersDeferred('state_changed');
+	notifyEventListenersDeferred('state_changed');
 
 	return true;
 }
@@ -440,69 +443,21 @@ async function stop() {
 		console.error(error);
 	}
 
-	notifyListenersDeferred('state_changed');
+	notifyEventListenersDeferred('state_changed');
 }
 
-let stateChangedListeners: PlayerEventListener[] = [];
-let stateChangedListenersNotifying: PlayerEventListener[] | null = null;
-/**
- * Notify all listeners of state changes
- */
-function notifyListeners(event: PlayerEvent) {
-	if (event === 'state_changed') {
-		stateChangedListenersNotifying = stateChangedListeners;
-		stateChangedListenersNotifying.forEach(listener => {
-			try {
-				listener();
-			} catch (error) {
-				console.error('Error notifying listener:', error);
-			}
-		});
-		stateChangedListenersNotifying = null;
-	}
-}
+const playerEventBus = Utils.createEventBus<PlayerEvents>();
+const notifyEventListeners = playerEventBus.notifyEventListeners;
+const addEventListener = playerEventBus.addEventListener;
+const removeEventListener = playerEventBus.removeEventListener;
 
 let stateChangedTimeoutId: number | undefined;
-function notifyListenersDeferred(event: PlayerEvent) {
-	const timeoutId = setTimeout(notifyListeners, 0, event);
+function notifyEventListenersDeferred<TEvent extends PlayerEvent>(event: TEvent, ...args: PlayerEvents[TEvent]) {
+	const timeoutId = setTimeout(notifyEventListeners, 0, event, ...args);
 
 	if (event === 'state_changed') {
 		clearTimeout(stateChangedTimeoutId);
 		stateChangedTimeoutId = timeoutId;
-	}
-}
-
-/**
- * Add an event listener for state changes
- */
-function addEventListener(event: PlayerEvent, listener: PlayerEventListener) {
-	if (typeof listener !== 'function') {
-		console.warn('Listener must be a function');
-		return;
-	}
-
-	if (event === 'state_changed') {
-		if (stateChangedListenersNotifying === stateChangedListeners) {
-			stateChangedListeners = [...stateChangedListeners];
-		} 
-
-		stateChangedListeners.push(listener);
-	}
-}
-
-/**
- * Remove an event listener
- */
-function removeEventListener(event: PlayerEvent, listener: PlayerEventListener) {
-	if (event === 'state_changed') {
-		const index = stateChangedListeners.indexOf(listener);
-		if (index !== -1) {
-			if (stateChangedListenersNotifying === stateChangedListeners) {
-				stateChangedListeners = [...stateChangedListeners];
-			} 
-
-			stateChangedListeners.splice(index, 1);
-		}
 	}
 }
 
