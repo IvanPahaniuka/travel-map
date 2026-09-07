@@ -2,7 +2,7 @@ import { FC, useCallback, useRef } from 'react';
 import './settings-button.css';
 
 import { SettingsDialog } from './settings-dialog';
-import Icons from '../../common/icons';
+import { SettingsOutlinedIcon } from '../../common/icons';
 
 export const SettingsButton: FC = () => {
 
@@ -20,7 +20,7 @@ export const SettingsButton: FC = () => {
                 aria-label='Settings'
                 title='Settings'
                 onClick={onClick}
-                children={<Icons.Settings />}
+                children={<SettingsOutlinedIcon />}
             />
             <SettingsDialog ref={dialogRef} />
         </>

@@ -3,7 +3,7 @@ import './player-widget.css';
 import { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import Translations from '../../translations';
 import Player, { PlayerState } from '..';
-import Icons from '../../common/icons';
+import { NextFilledIcon, VolumeOffFilledIcon, VolumeOnFilledIcon } from '../../common/icons';
 
 export const PlayerWidget: FC = () => {
   const [playerState, setPlayerState] = useState<PlayerState>(() => Player.getState());
@@ -73,8 +73,8 @@ export const PlayerWidget: FC = () => {
             aria-label="Toggle volume"
             onClick={onVolumeClick}
             children={playerState.volume > 0 
-              ? <Icons.VolumeOn /> 
-              : <Icons.VolumeOff />
+              ? <VolumeOnFilledIcon /> 
+              : <VolumeOffFilledIcon />
             }
           />
           <button 
@@ -83,7 +83,7 @@ export const PlayerWidget: FC = () => {
             aria-label="Next track"
             disabled={!playlist || !trackState}
             onClick={onNextClick}
-            children={<Icons.Next />}
+            children={<NextFilledIcon />}
           />
         </div>
       </div>

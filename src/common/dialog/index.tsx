@@ -2,8 +2,8 @@ import './index.css';
 
 import { Button } from "../button";
 import { DetailedHTMLProps, DialogHTMLAttributes, FC, ReactNode, useCallback, useRef } from 'react';
-import Icons from '../icons';
 import Utils from '../utils';
+import { CloseOutlinedIcon } from '../icons';
 
 export type DialogProps = DetailedHTMLProps<DialogHTMLAttributes<HTMLDialogElement>, HTMLDialogElement> & {
 	header?: ReactNode;
@@ -43,7 +43,7 @@ const DialogBase: FC<DialogBaseProps> = ({ ref, showCloseButton, className, chil
 					className='dialog-content-close-button'
 					aria-label='Close dialog'
 					onClick={closeDialog}
-					children={<Icons.Close />}
+					children={<CloseOutlinedIcon />}
 				/>
 			) : null}
 		</dialog>

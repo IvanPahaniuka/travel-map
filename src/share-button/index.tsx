@@ -1,8 +1,8 @@
 import './index.css';
 
 import { FC, useCallback } from 'react';
-import Icons from '../common/icons';
 import SettingsStorage from '../settings/settings-storage';
+import { ShareOutlinedIcon } from '../common/icons';
 
 function appendValuesToUrl(url: URL, paramName: string, values: string[] | string | null) {
     const normalizedValues = Array.isArray(values)
@@ -58,7 +58,7 @@ export const ShareButton: FC = () => {
             aria-label='Share'
             title='Share'
             onClick={onClick}
-            children={<Icons.Share/>}
+            children={<ShareOutlinedIcon />}
         />
     );
 }

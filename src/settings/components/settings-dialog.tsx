@@ -4,13 +4,13 @@ import Spotify from '../../spotify';
 import Encryption from '../../encryption';
 import Translations from '../../translations';
 import SettingsStorage, { Settings } from '../settings-storage';
-import { ChangeEventHandler, FC, Ref, Suspense, use, useCallback, useMemo, useRef, useState, useTransition } from 'react';
+import { ChangeEventHandler, FC, Ref, useCallback, useState } from 'react';
 import { Dialog } from '../../common/dialog';
 import { Button } from '../../common/button';
-import Icons from '../../common/icons';
 import SpotifyIcons from '../../spotify/components/spotify-icons';
 import { Loader } from '../../common/loader';
 import Utils from '../../common/utils';
+import { LockFileOutlinedIcon } from '../../common/icons';
 
 export type SettingsDialogProps = {
     ref?: Ref<HTMLDialogElement>;
@@ -111,7 +111,7 @@ const SettingsDialogContent: FC<{ settings: Settings, isSpotifyAuthorized: boole
                     color='secondary'
                     variant='outlined'
                     onClick={onEncryptClick}
-                    children={<Icons.LockFile/>}
+                    children={<LockFileOutlinedIcon />}
                 />
             </div>
 
