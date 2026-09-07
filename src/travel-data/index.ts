@@ -31,7 +31,7 @@ const useTravelData = (): UseTravelDataResult => {
     const settings = SettingsStorage.getSettings();
     const dataUrl = settings.data[0].url;
 
-    const { data, loading, error } = Utils.useFetch<unknown>(dataUrl, (r) => r.json());
+    const { data, isLoading: loading, error } = Utils.useFetch<unknown>(dataUrl, (r) => r.json());
 
     const travelData = useMemo<TravelData | null>(() => {
         if (typeof data !== 'object' || data === null) {

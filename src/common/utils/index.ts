@@ -79,20 +79,20 @@ export function createEventBus<TEvents extends Events>(): EventBus<TEvents> {
 
 export type FetchState<T> = {
     data: T | null;
-    loading: boolean;
+    isLoading: boolean;
     error: string | null;
 };
 
 function useFetch<T>(url: string, parse: (response: Response) => Promise<T>): FetchState<T> {
     const [state, setState] = useState<FetchState<T>>({
         data: null,
-        loading: true,
+        isLoading: true,
         error: null,
     });
 
     useEffect(() => {
         (async () => {
-            setState({ data: null, loading: true, error: null });
+            setState({ data: null, isLoading: true, error: null });
 
             try {
                 const response = await fetch(url);
@@ -102,11 +102,11 @@ function useFetch<T>(url: string, parse: (response: Response) => Promise<T>): Fe
 
                 const data = await parse(response);
 
-                setState({ data, loading: false, error: null });
+                setState({ data, isLoading: false, error: null });
             } catch (error) {
                 setState({
                     data: null,
-                    loading: false,
+                    isLoading: false,
                     error: 'Failed to fetch data'
 
                 });
