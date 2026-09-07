@@ -1,7 +1,6 @@
 import './index.css';
 
-import { Button } from "../button";
-import { DetailedHTMLProps, DialogHTMLAttributes, FC, ReactNode, useCallback, useRef } from 'react';
+import { ButtonHTMLAttributes, DetailedHTMLProps, DialogHTMLAttributes, FC, ReactNode, useCallback, useRef } from 'react';
 import Utils from '../utils';
 import { CloseOutlinedIcon } from '../icons';
 
@@ -10,20 +9,13 @@ export type DialogProps = DetailedHTMLProps<DialogHTMLAttributes<HTMLDialogEleme
 	message?: ReactNode;
 	buttons?: ReactNode;
 	showCloseButton?: boolean;
+	autoFocusCloseButton?: boolean;
 }
 
-type DialogBaseProps = DetailedHTMLProps<DialogHTMLAttributes<HTMLDialogElement>, HTMLDialogElement> & {
-	showCloseButton?: boolean;
-} 
-
-const DialogBase: FC<DialogBaseProps> = ({ ref, showCloseButton, className, children, ...props }) => {
+const DialogBase: FC<DialogProps> = ({ ref, showCloseButton, autoFocusCloseButton, className, children, ...props }) => {
 
 	const dialogRef = useRef<HTMLDialogElement>(null);
 	const mergedDialogRef = Utils.useMergedRef<HTMLDialogElement>(dialogRef, ref);
-
-	const classNameExtended = ['dialog-content', className]
-		.filter(cn => typeof cn === 'string' && cn.length > 0)
-		.join(' ');
 
 	const closeDialog = useCallback(() => {
 		dialogRef.current?.close();
@@ -33,15 +25,16 @@ const DialogBase: FC<DialogBaseProps> = ({ ref, showCloseButton, className, chil
 		<dialog
 			{...props}
 			ref={mergedDialogRef}
-			className={classNameExtended}
+			className={Utils.joinClassNames('dialog-content', className)}
 			closedby={props.closedby ?? 'any'}
 		>
 			{children}
 
 			{showCloseButton === true ? (
-				<Button
+				<button
 					className='dialog-content-close-button'
 					aria-label='Close dialog'
+					autoFocus={autoFocusCloseButton}
 					onClick={closeDialog}
 					children={<CloseOutlinedIcon />}
 				/>

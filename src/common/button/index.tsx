@@ -1,3 +1,4 @@
+import Utils from '../utils';
 import './index.css';
 
 import { ButtonHTMLAttributes, DetailedHTMLProps, FC, PropsWithChildren } from 'react';
@@ -19,11 +20,7 @@ export const Button: FC<ButtonProps> = ({ color, variant, className, ...props })
         'outlined': 'button-outlined',
     })[variant ?? 'contained'];
 
-    const classNameExtended = ['button', colorClassName, variantClassName, className]
-        .filter(cn => typeof cn === 'string' && cn.length > 0)
-        .join(' ');
-
     return (
-        <button {...props} className={classNameExtended} />
+        <button {...props} className={Utils.joinClassNames('button', colorClassName, variantClassName, className)} />
     );
 }

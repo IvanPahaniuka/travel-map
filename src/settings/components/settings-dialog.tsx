@@ -185,6 +185,7 @@ export const SettingsDialog: FC<SettingsDialogProps> = ({ ref }) => {
             className='settings-dialog'
             header={Translations.get('settings-dialog-title')}
             showCloseButton={true}
+            autoFocusCloseButton={true}
         >
             <SettingsDialogContent 
                 settings={settings}

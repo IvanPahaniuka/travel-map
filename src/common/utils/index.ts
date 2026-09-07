@@ -316,6 +316,21 @@ async function skipOrExecute<A extends unknown[], R>(key: string, func: (...args
     return promisesByKey[key] = func(...args).finally(() => { promisesByKey[key] = null; });
 }
 
+function joinClassNames(...classNames: (string | null | undefined)[]): string {
+
+    let result = '';
+    let separator = '';
+
+    for (const className of classNames) {
+        if (typeof className === 'string' && className.trim().length > 0) {
+            result += separator + className.trim();
+            separator = ' ';
+        }
+    }
+
+    return result;
+}
+
 const Utils = {
     createEventBus,
     useFetch,
@@ -325,6 +340,7 @@ const Utils = {
     createSkippingExecutor,
     waitAndExecute,
     skipOrExecute,
+    joinClassNames,
 };
 
 export default Utils;
