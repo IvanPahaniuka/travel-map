@@ -10,13 +10,12 @@ import Utils from './common/utils';
 import { SettingsButton } from './settings/components/settings-button';
 
 // TODO add share button to popup and add selected-place-id query parameter support
-// TODO add files patterns support for images (e.g. ./paris-2023/*.*) ???
-// TODO add files patterns support for tracks ???
-// TODO add multiple data sources support (data switch)
+// TODO add multiple data sources support (data switch) + share current data source
 // TODO implement video preview (maybe extend gallery items with objects support e.g. { "url": "....", "preview": "....." })
 // TODO add playback logo, colors and service link to track to player as it may be required by some services (e.g. spotify)
-// TODO implement parameters support in data.json (e.g. access_token)
 // TODO add more playbacks (apple music, youtube music etc)
+// TODO add alternative track source support (e.g. if no spotify available) (example { tracks: [['spotify:track:....', 'https://.....'], '', ['', '', ''], ....] })
+// TODO implement parameters support in data.json (e.g. access_token)
 // TODO remove settings input autofocus
 
 async function updatePlaylists(places: TravelPlace[] | null | undefined) {

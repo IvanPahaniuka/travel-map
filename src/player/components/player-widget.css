@@ -7,6 +7,11 @@
   display: flex;
   justify-content: center;
   pointer-events: none;
+  transition: transform 0.2s ease;
+}
+
+.player-widget-hidden {
+  transform: translateY(calc(100% + 1.5rem));
 }
 
 .player-widget-inner {
