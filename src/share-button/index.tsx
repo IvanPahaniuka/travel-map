@@ -1,7 +1,7 @@
 import './index.css';
 
 import { FC, useCallback } from 'react';
-import SettingsStorage from '../settings/settings-storage';
+import SettingsStorage from '../settings';
 import { ShareOutlinedIcon } from '../common/icons';
 
 function appendValuesToUrl(url: URL, paramName: string, values: string[] | string | null) {

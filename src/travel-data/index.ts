@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import SettingsStorage from "../settings/settings-storage";
+import SettingsStorage from "../settings";
 import Translations from "../translations";
 import Utils from "../common/utils";
 

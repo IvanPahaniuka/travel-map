@@ -1,7 +1,7 @@
 import { FC, useEffect, useRef } from "react";
 import { TravelData } from "../travel-data";
 import { Dialog } from "../common/dialog";
-import SettingsStorage from "../settings/settings-storage";
+import SettingsStorage from "../settings";
 
 export type WelcomeDialogProps = {
     welcomeData?: TravelData['welcome'];

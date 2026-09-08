@@ -1,6 +1,6 @@
 import Utils from "../common/utils";
 import Encryption from "../encryption";
-import SettingsStorage from "../settings/settings-storage";
+import SettingsStorage from "../settings";
 import PlaybackFile from "./playback-file";
 import { Playback, PlaybackEvent, PlaybackEventListener, PlaybackEvents, PlaybackTrackState, Track } from "./playbacks";
 

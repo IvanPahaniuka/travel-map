@@ -3,7 +3,7 @@ import './settings-dialog.css';
 import Spotify from '../../spotify';
 import Encryption from '../../encryption';
 import Translations from '../../translations';
-import SettingsStorage, { Settings } from '../settings-storage';
+import SettingsStorage, { Settings } from '..';
 import { ChangeEventHandler, FC, Ref, useCallback, useState } from 'react';
 import { Dialog } from '../../common/dialog';
 import { Button } from '../../common/button';
