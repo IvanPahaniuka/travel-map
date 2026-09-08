@@ -1,5 +1,3 @@
-import SpotifyAuthStorage from "../spotify/spotify-auth-storage";
-
 const SETTINGS_KEY = 'settings';
 
 export type SettingsDataEntry = {
@@ -103,8 +101,6 @@ function clearSettings() {
 }
 
 const SettingsStorage = {
-    Spotify: SpotifyAuthStorage,
-
     getSettings,
     setSettings,
     clearSettings,
