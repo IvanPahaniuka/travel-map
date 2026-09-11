@@ -31,7 +31,7 @@ async function decryptTrack(track: Track) {
 
     const encryptedData = new Uint8Array(await response.arrayBuffer());
     const settings = SettingsStorage.getSettings();
-    const encryptionKey = settings.data[0].encryptionKey;
+    const encryptionKey = settings.currentData?.encryptionKey ?? '';
 
     const decryptedData = await Encryption.decrypt(encryptedData, encryptionKey);
 

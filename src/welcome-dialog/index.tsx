@@ -16,13 +16,18 @@ export const WelcomeDialog: FC<WelcomeDialogProps> = ({ welcomeData }) => {
         }
 
         const settings = SettingsStorage.getSettings();
-        const lastWelcomeShownAt = settings.data[0].welcomeShownAt;
+
+        if (settings.currentData === null) {
+            return;
+        }
+
+        const lastWelcomeShownAt = settings.currentData.welcomeShownAt;
 
         if (typeof lastWelcomeShownAt !== 'number' || Date.now() - lastWelcomeShownAt > 30 * 60 * 1000) {
             dialogRef.current.showModal();
         }
 
-        settings.data[0].welcomeShownAt = Date.now();
+        settings.currentData.welcomeShownAt = Date.now();
         SettingsStorage.setSettings(settings);
     }, [welcomeData]);
 

@@ -92,6 +92,11 @@ function useFetch<T>(url: string, parse: (response: Response) => Promise<T>): Fe
 
     useEffect(() => {
         (async () => {
+            if (typeof url !== 'string' || url.length === 0) {
+                setState({ data: null, isLoading: false, error: 'Empty url provided' });
+                return;
+            }
+
             setState({ data: null, isLoading: true, error: null });
 
             try {

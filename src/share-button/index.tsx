@@ -1,39 +1,13 @@
 import './index.css';
 
 import { FC, useCallback } from 'react';
-import SettingsStorage from '../settings';
+import SettingsStorage, { createShareUrl } from '../settings';
 import { ShareOutlinedIcon } from '../common/icons';
-
-function appendValuesToUrl(url: URL, paramName: string, values: string[] | string | null) {
-    const normalizedValues = Array.isArray(values)
-        ? values.filter((value) => typeof value === 'string').map((value) => value)
-        : typeof values === 'string'
-        ? [values]
-        : [];
-
-    url.searchParams.delete(paramName);
-
-    normalizedValues.forEach((value) => {
-        url.searchParams.append(paramName, value);
-    });
-}
-
-function createShareUrl(): string {
-    const shareUrl = new URL(window.location.href);
-    const settings = SettingsStorage.getSettings();
-    const dataUrls = settings.data.map((entry) => entry.url);
-    const encryptionKeys = settings.data.map((entry) => entry.encryptionKey);
-
-    appendValuesToUrl(shareUrl, 'data_urls', dataUrls);
-    appendValuesToUrl(shareUrl, 'encryption_keys', encryptionKeys);
-
-    return shareUrl.toString();
-}
 
 export const ShareButton: FC = () => {
 
     const onClick = useCallback(async () => {
-        const shareUrl = createShareUrl();
+        const shareUrl = createShareUrl(SettingsStorage.getSettings());
 
         try {
             if (typeof navigator.share === 'function') {

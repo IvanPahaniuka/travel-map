@@ -7,9 +7,17 @@ dialog .settings-dialog-content {
 dialog .settings-dialog-content .settings-input-group {
     display: flex;
     width: 100%;
-    gap: 1.25rem;
+    gap: 0;
     justify-content: space-between;
     align-items: center;
+}
+
+dialog .settings-dialog-content .settings-input-group > *:nth-child(2) {
+    margin-left: 1.25rem;
+}
+
+dialog .settings-dialog-content .settings-input-group > *:nth-child(3) {
+    margin-left: 0.5rem;
 }
 
 dialog .settings-dialog-content .settings-input-label {
@@ -26,16 +34,24 @@ dialog .settings-dialog-content .settings-input {
     border-radius: 999px;
 }
 
-dialog .settings-dialog-content .settings-input-group.settings-encryption-key-group {
-    gap: 0;
-}
-
-dialog .settings-dialog-content .settings-input-label.settings-encryption-key-label {
-    margin-right: 1.25rem;
-}
-
 dialog .settings-dialog-content .settings-input.settings-encryption-key-input {
-    margin-right: 0.5rem;
+    -webkit-text-security: disc;
+}
+
+dialog .settings-dialog-content .settings-current-data-select {
+    background: #fff;
+}
+
+dialog .settings-dialog-content .settings-delete-data-button {
+    color: #e11616;
+    border-color: #e11616;
+    height: 2rem;
+    aspect-ratio: 1 / 1;
+    padding: 0.25rem;
+}
+
+dialog .settings-dialog-content .settings-delete-data-button:hover {
+    background: #ffdbdb;
 }
 
 dialog .settings-dialog-content .settings-encryption-key-button {

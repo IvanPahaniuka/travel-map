@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import SettingsStorage from "../settings";
 import Translations from "../translations";
 import Utils from "../common/utils";
+import { useSettings } from "../settings/components/hooks";
 
 export type TravelData = {
   welcome?: {
@@ -23,15 +24,15 @@ export type TravelPlace = {
 
 export type UseTravelDataResult = {
     data: TravelData | null,
-    loading: boolean,
+    isLoading: boolean,
     error: string | null,
 }
 
 const useTravelData = (): UseTravelDataResult => {
-    const settings = SettingsStorage.getSettings();
-    const dataUrl = settings.data[0].url;
+    const settings = useSettings();
+    const dataUrl = settings.currentData?.url ?? '';
 
-    const { data, isLoading: loading, error } = Utils.useFetch<unknown>(dataUrl, (r) => r.json());
+    const { data, isLoading, error } = Utils.useFetch<unknown>(dataUrl, (r) => r.json());
 
     const travelData = useMemo<TravelData | null>(() => {
         if (typeof data !== 'object' || data === null) {
@@ -100,7 +101,7 @@ const useTravelData = (): UseTravelDataResult => {
         return result;
     }, [data]);
 
-    return { data: travelData, loading, error };
+    return { data: travelData, isLoading, error };
 
     function replaceCurrentDirectory(data: TravelData, dataUrl: string) {
         if (!Array.isArray(data.places)) {
