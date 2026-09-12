@@ -46,6 +46,17 @@ const SpotifyAuthStorage = {
         localStorage.removeItem('spotify_auth_state');
     },
 
+    getAuthDialogShownAt: (): number | null => {
+        const shownAtStr = localStorage.getItem('spotify_auth_dialog_shown_at') || '';
+        const shownAt = !Number.isNaN(+shownAtStr) ? +shownAtStr : null;
+        return shownAt;
+    },
+    setAuthDialogShownAt: (shownAt: number) => {
+        localStorage.setItem('spotify_auth_dialog_shown_at', shownAt.toString());
+    },
+    clearAuthDialogShownAt: () => {
+        localStorage.removeItem('spotify_auth_dialog_shown_at');
+    },
 }
 
 export default SpotifyAuthStorage;
