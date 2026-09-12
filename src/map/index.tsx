@@ -2,16 +2,17 @@ import './index.css';
 import 'leaflet/dist/leaflet.css';
 
 import L from 'leaflet';
-import { FC, useState, useEffect, useRef, Ref, useCallback, RefCallback } from 'react';
+import { FC, useState, useEffect, useRef, Ref, useCallback, RefCallback, useEffectEvent, useMemo } from 'react';
 import { TravelData, TravelPlace } from '../travel-data';
 import { createPortal } from 'react-dom';
 import { TravelPopup } from './popup';
 import Utils from '../common/utils';
 import Player from '../player';
+import SettingsStorage from '../settings';
+import { useSettings } from '../settings/components/hooks';
 
 export type TravelMapProps = {
   mapRef?: Ref<L.Map>;
-  selectedPlaceRef?: Ref<TravelPlace>;
   travelData?: TravelData | null;
   enablePlayerController?: boolean;
 };
@@ -45,48 +46,32 @@ const TravelMapBase: FC<TravelMapProps> = ({ mapRef }) => {
   return (<div ref={mapElementRef} id="map" aria-label="Travel map" />);
 }
 
+type PlaceMarker = {
+  place: TravelPlace,
+  openPopup: () => void,
+  closePopup: () => void,
+  marker: L.Marker,
+  popup: L.Popup,
+  popupElement: HTMLDivElement,
+}
+
 const TravelMapPlaces: FC<TravelMapProps> = (props) => {
   const places = props.travelData?.places;
-  const [setSelectedPlaceRef, cleanupSelectedPlaceRef] = Utils.useRefModifier(props.selectedPlaceRef);
+
+  const settings = useSettings();
 
   const [map, setMap] = useState<L.Map | null>(null);
+  const mapRef = Utils.useMergedRef(setMap, props.mapRef);
 
-  const markersRef = useRef<L.Marker[]>([]);
-  const popupElementsRef = useRef<HTMLDivElement[]>([]);
-
-  const placesCount = places?.length ?? 0;
-  while (popupElementsRef.current.length < placesCount) {
-    popupElementsRef.current.push(document.createElement('div'));
-  }
-  while (popupElementsRef.current.length > placesCount) {
-    popupElementsRef.current.pop();
-  }
-
-  const onPopupCloseCallback = useCallback(() => { 
-      cleanupSelectedPlaceRef();
-  }, []);
-  const mapRefLocal: React.RefCallback<L.Map> = useCallback((mapNew: L.Map | null) => {
-    setMap((mapOld) => {
-      mapOld?.off('popupclose', onPopupCloseCallback);
-      mapNew?.on('popupclose', onPopupCloseCallback);
-      return mapNew;
-    });
-  }, []);
-
-  const mapRef = Utils.useMergedRef(mapRefLocal, props.mapRef);
+  const [placeMarkers, setPlaceMarkers] = useState<PlaceMarker[]>([]);
 
   useEffect(() => {
-    if (!Array.isArray(places) || !map) {
+    if (!map || !Array.isArray(places) || places.length === 0) {
       return;
     }
 
-    while (markersRef.current.length > 0) {
-      const marker = markersRef.current.pop();
-      marker?.removeFrom(map);
-      marker?.off();
-    }
-
-    const markers = places.map((place, index) => {
+    const placeMarkersNew: PlaceMarker[] = [];
+    for (const place of places) {
       const marker = L.marker([place.latitude, place.longitude], {
         icon: L.divIcon({
           html: '<span class="marker-dot"></span>',
@@ -96,46 +81,98 @@ const TravelMapPlaces: FC<TravelMapProps> = (props) => {
         }),
       }).addTo(map);
 
-      marker.on('click', () => {
-        setSelectedPlaceRef(place);
+      const popupElement = document.createElement('div');
 
-        const popup = L.popup({
-          className: 'travel-popup',
-          minWidth: 250,
-          maxWidth: 600,
-          closeButton: false,
-          offset: [0, -12],
-        });
-
-        const popupElement = popupElementsRef.current[index];
-
-        popup
-          .setLatLng(marker.getLatLng())
-          .setContent(popupElement)
-          .openOn(map);
+      const popup = L.popup({
+        className: 'travel-popup',
+        minWidth: 250,
+        maxWidth: 600,
+        closeButton: false,
+        offset: [0, -12],
       });
 
-      return marker;
-    });
+      popup
+        .setLatLng(marker.getLatLng())
+        .setContent(popupElement);
 
-    if (markers.length > 0) {
-      const bounds = L.latLngBounds(
-        markers.map((marker) => marker.getLatLng()),
-      );
+      const onPopupOpen = () => {
+        const settings = SettingsStorage.getSettings();
+        if (settings.currentPlaceId === place.id) {
+          return;
+        }
+        settings.currentPlaceId = place.id;
+        SettingsStorage.setSettings(settings);
+      };
+      popup.on('add', onPopupOpen);
+      
+      const onPopupClose = () => {
+        const settings = SettingsStorage.getSettings();
+        if (settings.currentPlaceId !== place.id) {
+          return;
+        }
+        settings.currentPlaceId = null;
+        SettingsStorage.setSettings(settings);
+      };
+      popup.on('remove', onPopupClose);
 
-      map.fitBounds(bounds.pad(0.25), { animate: false });
+      const openPopup = () => {
+        popup.openOn(map);
+      };
+
+      const closePopup = () => {
+        popup.closePopup();
+      };
+
+      marker.on('click', openPopup);
+
+      placeMarkersNew.push({
+        place,
+        openPopup,
+        closePopup,
+        marker,
+        popup,
+        popupElement
+      });
     }
 
-    markersRef.current.push(...markers);
+    if (placeMarkersNew.length > 0) {
+      const currentPlaceMarker = placeMarkersNew.find(pm => pm.place.id === settings.currentPlaceId) ?? null;
+      if (currentPlaceMarker) {
+        const bounds = L.latLngBounds([currentPlaceMarker.marker.getLatLng()]);
+        map.fitBounds(bounds.pad(0.25), { maxZoom: 10, paddingTopLeft: L.point(0, 300), animate: false });
+      } else {
+        const bounds = L.latLngBounds(
+          placeMarkersNew.map((placeMarker) => placeMarker.marker.getLatLng()),
+        );
+        map.fitBounds(bounds.pad(0.25), { maxZoom: 10, animate: false });
+      }
+    }
+
+    setPlaceMarkers(placeMarkersNew);
 
     return () => {
-      while (markersRef.current.length > 0) {
-        const marker = markersRef.current.pop();
-        marker?.removeFrom(map);
-        marker?.off();
+      for (const placeMarker of placeMarkers) {
+        placeMarker.marker.removeFrom(map);
+        placeMarker.marker.off();
+        placeMarker.popup.closePopup();
+        placeMarker.popup.off();
       }
+      setPlaceMarkers([]);
     };
   }, [places, map]);
+
+  useEffect(() => {
+    if (settings.currentPlaceId !== null) {
+      const placeMarker = placeMarkers.find(pm => pm.place.id === settings.currentPlaceId);
+      if (placeMarker && !placeMarker.popup.isPopupOpen()) {
+        placeMarker.openPopup();
+      }
+    } else {
+      for (const placeMarker of placeMarkers) {
+        placeMarker.closePopup();
+      }
+    }
+  }, [placeMarkers, settings]);
 
   return (
     <>
@@ -144,10 +181,10 @@ const TravelMapPlaces: FC<TravelMapProps> = (props) => {
         mapRef={mapRef}
       />
 
-      {places?.map((place, index) => createPortal(
-        <TravelPopup place={place} />,
-        popupElementsRef.current[index],
-        place.id
+      {placeMarkers.map((placeMarker) => createPortal(
+        <TravelPopup place={placeMarker.place} />,
+        placeMarker.popupElement,
+        placeMarker.place.id
       ))}
     </>
   );
@@ -221,9 +258,15 @@ const TravelMapPlayerController: FC<TravelMapProps> = (props) => {
   const places = props.travelData?.places;
 
   const [map, setMap] = useState<L.Map | null>(null);
-  const selectedPlaceRefLocal = useRef<TravelPlace>(null);
+  const mapRef: RefCallback<L.Map> = Utils.useMergedRef(props.mapRef, setMap);
 
-  const updateCurrentPlaylistSkipping = useCallback(() => {
+  const settings = useSettings();
+  const selectedPlace = useMemo(
+    () => places?.find(p => p.id === settings.currentPlaceId) ?? null, 
+    [settings.currentPlaceId, places]
+  );
+
+  const updateCurrentPlaylistSkipping = useEffectEvent(() => {
     if (!map || enablePlayerController === false) {
       return;
     }
@@ -233,11 +276,11 @@ const TravelMapPlayerController: FC<TravelMapProps> = (props) => {
       updateCurrentPlaylist, 
       map, 
       places ?? [], 
-      selectedPlaceRefLocal.current
+      selectedPlace
     );
-  }, [map, places, enablePlayerController]);
+  });
 
-  const updateCurrentPlaylistWaiting = useCallback(() => {
+  const updateCurrentPlaylistWaiting = useEffectEvent(() => {
     if (!map || enablePlayerController === false) {
       return;
     }
@@ -247,16 +290,13 @@ const TravelMapPlayerController: FC<TravelMapProps> = (props) => {
       updateCurrentPlaylist, 
       map, 
       places ?? [], 
-      selectedPlaceRefLocal.current
+      selectedPlace
     );
-  }, [map, places, enablePlayerController]);
+  });
 
-  const onSelectedPlaceChanged = useCallback(() => {
+  useEffect(() => {
     updateCurrentPlaylistWaiting();
-  }, [updateCurrentPlaylistWaiting]);
-
-  const mapRef: RefCallback<L.Map> = Utils.useMergedRef(props.mapRef, setMap);
-  const selectedPlaceRef: RefCallback<TravelPlace> = Utils.useMergedRef(props.selectedPlaceRef, selectedPlaceRefLocal, onSelectedPlaceChanged);
+  }, [selectedPlace]);
 
   useEffect(() => {
     if (!map || enablePlayerController === false) {
@@ -306,12 +346,11 @@ const TravelMapPlayerController: FC<TravelMapProps> = (props) => {
         Player.stop
       );
     };
-  }, [map, enablePlayerController, updateCurrentPlaylistSkipping, updateCurrentPlaylistWaiting]);
+  }, [map, enablePlayerController]);
 
   return TravelMapPlaces({
     ...props,
     mapRef: mapRef,
-    selectedPlaceRef: selectedPlaceRef,
   });
 };
 
