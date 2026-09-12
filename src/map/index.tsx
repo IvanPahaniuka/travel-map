@@ -151,7 +151,7 @@ const TravelMapPlaces: FC<TravelMapProps> = (props) => {
     setPlaceMarkers(placeMarkersNew);
 
     return () => {
-      for (const placeMarker of placeMarkers) {
+      for (const placeMarker of placeMarkersNew) {
         placeMarker.marker.removeFrom(map);
         placeMarker.marker.off();
         placeMarker.popup.closePopup();
